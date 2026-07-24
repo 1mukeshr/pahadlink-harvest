@@ -1,0 +1,1 @@
+import{s as e,t}from"./jsx-dev-runtime-DQbBSKlq.js";import{t as n}from"./AdminLayout-CBJnyaXP.js";var r=t(),i=`E:/mukesh-rawat/pahadlink/src/admin/AdminPortal.jsx`;function a(){return(0,r.jsxDEV)(n,{mode:`admin`,children:(0,r.jsxDEV)(e,{},void 0,!1,{fileName:i,lineNumber:8,columnNumber:7},this)},void 0,!1,{fileName:i,lineNumber:7,columnNumber:5},this)}export{a as default};

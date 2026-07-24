@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-dev-runtime-DQbBSKlq.js";import{t}from"./OrdersDesk-yA_u4qzB.js";var n=e(),r=`E:/mukesh-rawat/pahadlink/src/admin/SellerPage.jsx`;function i(){return(0,n.jsxDEV)(t,{mode:`seller`},void 0,!1,{fileName:r,lineNumber:4,columnNumber:10},this)}export{i as default};

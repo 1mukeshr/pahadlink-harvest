@@ -1,0 +1,1 @@
+import{t as e}from"./jsx-dev-runtime-DQbBSKlq.js";import{t}from"./OrdersDesk-yA_u4qzB.js";var n=e(),r=`E:/mukesh-rawat/pahadlink/src/admin/AdminPage.jsx`;function i(){return(0,n.jsxDEV)(t,{mode:`admin`,view:`dashboard`,bare:!0},void 0,!1,{fileName:r,lineNumber:5,columnNumber:10},this)}export{i as default};
