@@ -1,6 +1,7 @@
 {
-  "apiUrl": "https://pahadlink-api.onrender.com/api",
+  "apiUrl": "https://compensation-randy-agree-successful.trycloudflare.com/api",
   "apiUrls": [
+    "https://compensation-randy-agree-successful.trycloudflare.com/api",
     "https://pahadlink-api.onrender.com/api"
   ],
   "firebase": {
