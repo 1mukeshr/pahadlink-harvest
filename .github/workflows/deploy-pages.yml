@@ -1,0 +1,78 @@
+# Deploy frontend to GitHub Pages
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Resolve API URL for Pages build
+        id: api
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: |
+          # public/runtime-config.json is the source of truth for Pages.
+          # VITE_API_URL is only a fallback when runtime-config apiUrl is empty.
+          FILE_URL=$(node -e "try{const u=require('./public/runtime-config.json').apiUrl||'';console.log(String(u).trim())}catch{console.log('')}")
+          EFFECTIVE="${FILE_URL:-$VITE_API_URL}"
+          if [ -z "$EFFECTIVE" ]; then
+            echo "::warning::No API URL in public/runtime-config.json or secret VITE_API_URL."
+            echo "has_api=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          case "$EFFECTIVE" in
+            http://*|https://*) ;;
+            *)
+              echo "::error::API URL must start with http:// or https://"
+              exit 1
+              ;;
+          esac
+          echo "Using hosted API: $EFFECTIVE (source=$([ -n \"$FILE_URL\" ] && echo runtime-config || echo VITE_API_URL))"
+          echo "has_api=true" >> "$GITHUB_OUTPUT"
+          echo "api_url=$EFFECTIVE" >> "$GITHUB_OUTPUT"
+      - name: Check API health
+        if: steps.api.outputs.has_api == 'true'
+        env:
+          API_URL: ${{ steps.api.outputs.api_url }}
+        continue-on-error: true
+        run: |
+          HEALTH_URL="${API_URL%/}/health"
+          echo "GET $HEALTH_URL"
+          curl -fsS --max-time 60 "$HEALTH_URL" || echo "::warning::API health check failed (service may be sleeping). Pages build continues."
+      - name: Build for GitHub Pages
+        env:
+          # Fallback only; public/runtime-config.json wins when apiUrl is set
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: npm run build:pages
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

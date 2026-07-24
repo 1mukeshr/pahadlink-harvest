@@ -1,0 +1,15 @@
+{
+  "apiUrl": "https://pahadlink-api.onrender.com/api",
+  "apiUrls": [
+    "https://pahadlink-api.onrender.com/api"
+  ],
+  "firebase": {
+    "apiKey": "AIzaSyCa1V4GXz7fpGHQ_0gKNHkW5qQfVnWqeok",
+    "authDomain": "pahadlink-56803.firebaseapp.com",
+    "projectId": "pahadlink-56803",
+    "storageBucket": "pahadlink-56803.firebasestorage.app",
+    "messagingSenderId": "1034496959291",
+    "appId": "1:1034496959291:web:335b1d53df9d54fad0cd1e",
+    "measurementId": "G-BWFKZ2W96E"
+  }
+}
