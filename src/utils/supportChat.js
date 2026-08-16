@@ -5,7 +5,7 @@ export const SUPPORT = {
   phoneTel: '+919690421423',
   phoneWa: '919690421423',
   email: 'care@pahadlink.com',
-  hoursLabel: 'Mon–Sat, 10:00 AM – 7:00 PM IST',
+  hoursLabel: 'Mon-Sat, 10:00 AM - 7:00 PM IST',
 }
 
 const CHAT_STORAGE_KEY = 'pahadlink_support_chat'
@@ -42,9 +42,6 @@ export function findBestFaq(question) {
     }
     // Boost common intents
     if (/free\s*ship|shipping|deliver/.test(q) && /ship|deliver/.test(hay)) {
-      score += 3
-    }
-    if (/return|refund|replace|damag/.test(q) && /return|refund|damag/.test(hay)) {
       score += 3
     }
     if (/track|order|status/.test(q) && /track|order/.test(hay)) {
@@ -146,7 +143,7 @@ export function pageGreeting(pathname = '/') {
   if (pathname.startsWith('/shop') || pathname.startsWith('/category/')) {
     return 'Looking for the right pahadi pick? Ask about shipping, sizes, or products.'
   }
-  return 'Hi! Ask about orders, shipping, returns, or products. For a live reply, use WhatsApp.'
+  return 'Hi! Ask about orders, shipping, or products. For a live reply, use WhatsApp.'
 }
 
 export function buildWaLink(message) {

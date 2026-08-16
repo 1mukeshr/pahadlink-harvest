@@ -43,9 +43,9 @@ const userSchema = new mongoose.Schema(
     },
     googleId: {
       type: String,
-      default: null,
-      sparse: true,
+      // Omit when unused — sparse unique must not index many `null` values
       unique: true,
+      sparse: true,
     },
     phone: {
       type: String,
@@ -66,6 +66,38 @@ const userSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    /** Account-synced bag — available on every device after login */
+    cart: {
+      type: [
+        new mongoose.Schema(
+          {
+            key: { type: String, required: true, trim: true },
+            id: { type: String, required: true, trim: true },
+            name: { type: String, default: '', trim: true },
+            image: { type: String, default: '', trim: true },
+            price: { type: Number, default: 0, min: 0 },
+            size: { type: String, default: '', trim: true },
+            qty: { type: Number, default: 1, min: 1, max: 99 },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
+    },
+    wishlist: {
+      type: [
+        new mongoose.Schema(
+          {
+            id: { type: String, required: true, trim: true },
+            name: { type: String, default: '', trim: true },
+            image: { type: String, default: '', trim: true },
+            price: { type: Number, default: 0, min: 0 },
+          },
+          { _id: false }
+        ),
+      ],
+      default: [],
     },
   },
   { timestamps: true }

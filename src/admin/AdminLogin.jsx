@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { UserIcon, LockIcon, EyeIcon, EyeOffIcon } from '../components/icons'
 import { useAuth } from '../context/AuthContext'
-import { ROUTES, ROLES, resolvePostAuthPath } from '../config'
+import { ROUTES, ROLES, resolvePostAuthPath, homePathForRole } from '../config'
 import logo from '../assets/images/logo.png'
 import './admin.css'
 
@@ -16,12 +16,12 @@ function resolveReturnPath(from) {
 }
 
 /**
- * Separate admin desk login — no register option.
+ * Separate ops portal login (admin + seller) — never the shop login/register.
  */
 export default function AdminLogin() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { login, logout, isAuthenticated, user, loading } = useAuth()
+  const { login, isAuthenticated, user, loading } = useAuth()
   const [form, setForm] = useState({
     username: '',
     password: '',
@@ -32,12 +32,16 @@ export default function AdminLogin() {
   const [message, setMessage] = useState('')
 
   const from = resolveReturnPath(location.state?.from)
+  const isStaff =
+    user?.role === ROLES.ADMIN || user?.role === ROLES.SELLER
 
-  if (!loading && isAuthenticated && user?.role === ROLES.ADMIN) {
-    const dest =
-      from.startsWith(ROUTES.ADMIN) && from !== ROUTES.ADMIN_LOGIN
-        ? from
-        : ROUTES.ADMIN
+  // Customers stay on the shop — this login is ops-only.
+  if (!loading && isAuthenticated && user?.role === ROLES.CUSTOMER) {
+    return <Navigate to={ROUTES.HOME} replace />
+  }
+
+  if (!loading && isAuthenticated && isStaff) {
+    const dest = resolvePostAuthPath(user, from || homePathForRole(user))
     return <Navigate to={dest} replace />
   }
 
@@ -58,18 +62,19 @@ export default function AdminLogin() {
         username: form.username,
         password: form.password,
         remember: form.remember,
+        scope: 'ops',
       })
-      if (nextUser?.role !== ROLES.ADMIN) {
-        logout()
+      if (
+        nextUser?.role !== ROLES.ADMIN &&
+        nextUser?.role !== ROLES.SELLER
+      ) {
         setMessage(
-          'Admin access only. Use the storefront login for customer accounts.'
+          'Staff access only. Customer accounts sign in on the shop at /login.'
         )
         return
       }
-      const path = resolvePostAuthPath(nextUser, from || ROUTES.ADMIN)
-      navigate(path.startsWith(ROUTES.ADMIN) ? path : ROUTES.ADMIN, {
-        replace: true,
-      })
+      const path = resolvePostAuthPath(nextUser, from || homePathForRole(nextUser))
+      navigate(path, { replace: true })
     } catch (err) {
       setMessage(err.message || 'Could not sign in')
     } finally {
@@ -86,14 +91,18 @@ export default function AdminLogin() {
             <p className="admin-login__eyebrow">Admin portal</p>
             <h1>Sign in</h1>
             <p className="admin-login__lead">
-              Staff access only. There is no registration for this desk.
+              Separate staff login for admin and sellers. Shop customers use the
+              storefront login.
             </p>
           </header>
 
           <form className="admin-login__form" onSubmit={onSubmit} noValidate>
             {message ? (
               <p className="admin-login__alert" role="alert">
-                {message}
+                {message}{' '}
+                {message.includes('Customer accounts') ? (
+                  <Link to={ROUTES.LOGIN}>Go to shop login</Link>
+                ) : null}
               </p>
             ) : null}
 
@@ -158,7 +167,7 @@ export default function AdminLogin() {
               className="admin-login__submit"
               disabled={submitting}
             >
-              {submitting ? 'Signing in…' : 'Sign in to admin'}
+              {submitting ? 'Signing in…' : 'Sign in to portal'}
             </button>
           </form>
         </div>

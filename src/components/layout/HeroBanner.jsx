@@ -13,21 +13,24 @@ const LARGE_SLIDES = productBanners.map((banner) => ({
   image: banner.image,
 }))
 
-/** Side panels - related product deep-links */
+/**
+ * Side panels — brand cards drawn from the theme rather than photography, so
+ * the copy never lands on top of the wordmark baked into a product shot.
+ */
 const SMALL_PANELS = [
   {
     to: productPath('raw-honey'),
-    image: productBanners[0].image,
+    tone: 'green',
+    eyebrow: 'Natural products',
     title: 'Raw honey',
     text: 'Unprocessed forest honey from local keepers.',
-    button: 'Shop honey',
   },
   {
     to: categoryPath('organic-food'),
-    image: productBanners[1].image,
-    title: 'Organic foods',
-    text: 'Hill staples for everyday pahadi cooking.',
-    button: 'Shop organic',
+    tone: 'cream',
+    eyebrow: 'Organic foods',
+    title: 'Hill staples',
+    text: 'Rajma, millets and red rice for everyday pahadi cooking.',
   },
 ]
 
@@ -58,8 +61,8 @@ const HeroBanner = () => {
                 <img
                   src={slide.image}
                   alt={slide.alt}
-                  width={1200}
-                  height={675}
+                  width={1000}
+                  height={500}
                   loading={i === 0 ? 'eager' : 'lazy'}
                   decoding="async"
                   fetchPriority={i === 0 ? 'high' : 'auto'}
@@ -94,25 +97,20 @@ const HeroBanner = () => {
 
           <div className="mf-hero__smalls-row">
             {SMALL_PANELS.map((panel) => (
-              <div key={panel.title} className="mf-hero__small-wrap">
-                <img
-                  className="mf-hero__video"
-                  src={panel.image}
-                  alt=""
-                  width={700}
-                  height={400}
-                  loading="lazy"
-                  decoding="async"
-                />
+              <Link
+                key={panel.title}
+                to={panel.to}
+                className={`mf-hero__small-wrap mf-hero__small-wrap--${panel.tone}`}
+              >
                 <div className="mf-hero__small-content">
+                  <p className="mf-hero__small-eyebrow">{panel.eyebrow}</p>
                   <h3 className="mf-hero__small-title">{panel.title}</h3>
                   <p className="mf-hero__small-text">{panel.text}</p>
-                  <Link to={panel.to} className="mf-hero__small-btn">
-                    <span>{panel.button}</span>
-                    <ArrowRightIcon size={14} />
-                  </Link>
                 </div>
-              </div>
+                <span className="mf-hero__small-go" aria-hidden="true">
+                  <ArrowRightIcon size={15} />
+                </span>
+              </Link>
             ))}
           </div>
         </div>

@@ -30,21 +30,6 @@ function normalizeApiUrl(value) {
     .replace(/\/$/, '')
 }
 
-function isEphemeralTunnelUrl(url) {
-  try {
-    const host = new URL(url).hostname.toLowerCase()
-    return (
-      host.endsWith('.trycloudflare.com') ||
-      host.endsWith('.loca.lt') ||
-      host.endsWith('.ngrok-free.app') ||
-      host.endsWith('.ngrok.io') ||
-      host.endsWith('.ngrok.app')
-    )
-  } catch {
-    return false
-  }
-}
-
 const fromFileApi = normalizeApiUrl(existing.apiUrl)
 const fromEnvApi = normalizeApiUrl(process.env.VITE_API_URL)
 // Allow temporary tunnels in runtime-config while Render is offline

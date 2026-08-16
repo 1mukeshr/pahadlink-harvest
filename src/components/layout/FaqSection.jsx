@@ -1,9 +1,6 @@
 import { useState } from 'react'
 import { getFaqs } from '../../data/faqData'
 
-/**
- * Shared FAQ accordion used across storefront pages.
- */
 const FaqSection = ({
   page = 'home',
   title = 'Frequently asked questions',

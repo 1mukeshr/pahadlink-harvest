@@ -5,12 +5,13 @@ import react from '@vitejs/plugin-react'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// GitHub project Pages: https://1mukeshr.github.io/pahadlink-harvest/
-const PAGES_BASE = (
+// GitHub project Pages needs /pahadlink-harvest/; Vercel / custom domain use /
+const isVercel = process.env.VERCEL === '1'
+const rawBase =
   process.env.VITE_PAGES_BASE ||
   process.env.PAGES_BASE ||
-  '/pahadlink-harvest/'
-).replace(/\/?$/, '/')
+  (isVercel ? '/' : '/pahadlink-harvest/')
+const PAGES_BASE = String(rawBase).replace(/\/?$/, '/') || '/'
 
 export default defineConfig(({ command }) => ({
   // Absolute base avoids broken asset URLs on GitHub Pages.

@@ -3,24 +3,22 @@
  */
 import { MAX_QTY_PER_ITEM_PER_CUSTOMER as SHARED_MAX_QTY } from '@pahadlink/shared/constants'
 
-export const APP_NAME = 'PahadLink'
-
 /** Max units of the same product one customer may buy in one order */
 export const MAX_QTY_PER_ITEM_PER_CUSTOMER = SHARED_MAX_QTY
 
 export {
-  API_BASE_URL,
   getApiBaseUrl,
-  getRuntimeFirebaseConfig,
   isHostedStaticApp,
   isLocalAppHost,
-  isLocalOrLanHost,
   loadRuntimeConfig,
 } from './api'
 
 export const STORAGE = {
   TOKEN: 'pahadlink_token',
   USER: 'pahadlink_user',
+  /** Separate staff (admin/seller) portal session — never shared with shop login */
+  OPS_TOKEN: 'pahadlink_ops_token',
+  OPS_USER: 'pahadlink_ops_user',
   CART: 'pahadlink_cart',
   WISHLIST: 'pahadlink_wishlist',
   LOCATION: 'pahadlink_location',
@@ -36,8 +34,6 @@ export const ROLES = {
   SELLER: 'seller',
   ADMIN: 'admin',
 }
-
-export const ROLE_LIST = [ROLES.CUSTOMER, ROLES.SELLER, ROLES.ADMIN]
 
 export const ROUTES = {
   HOME: '/',
@@ -62,7 +58,6 @@ export const ROUTES = {
   ABOUT: '/about',
   PRIVACY: '/privacy',
   TERMS: '/terms',
-  REFUNDS: '/refunds',
 }
 
 export const productPath = (id) => `/product/${id}`
@@ -80,6 +75,58 @@ export const AUTH_PATHS = [
   ROUTES.RESET_PASSWORD,
   ROUTES.ADMIN_LOGIN,
 ]
+
+/** Admin / seller console paths — always a separate shell from the shop. */
+export function isOpsPlatformPath(pathname = '') {
+  return (
+    pathname === ROUTES.ADMIN ||
+    pathname.startsWith(`${ROUTES.ADMIN}/`) ||
+    pathname === ROUTES.SELLER ||
+    pathname.startsWith(`${ROUTES.SELLER}/`)
+  )
+}
+
+/** Which auth jar to use for the current URL (shop vs staff portal). */
+export function getAuthScope(pathname = '') {
+  return isOpsPlatformPath(pathname) ? 'ops' : 'shop'
+}
+
+/** Read scope from the current browser URL (works outside React too). */
+export function getAuthScopeFromWindow() {
+  if (typeof window === 'undefined') return 'shop'
+
+  let pathname = String(window.location.pathname || '/')
+  const hash = String(window.location.hash || '')
+
+  // Legacy HashRouter bookmarks only when path is still root: /#/admin
+  const base = String(import.meta.env.BASE_URL || '/').replace(/\/$/, '')
+  const pathWithoutBase =
+    base && pathname.startsWith(base)
+      ? pathname.slice(base.length) || '/'
+      : pathname
+  if (
+    hash.startsWith('#/') &&
+    (pathWithoutBase === '/' || pathWithoutBase === '')
+  ) {
+    pathname = hash.slice(1).split('?')[0] || '/'
+  } else {
+    pathname = pathWithoutBase
+  }
+
+  pathname = pathname.replace(/\/$/, '') || '/'
+  return getAuthScope(pathname)
+}
+
+/**
+ * Password-recovery pages stay reachable for staff; every other storefront
+ * URL bounces them back to their desk.
+ */
+export function isStaffAllowedStorefrontPath(pathname = '') {
+  return (
+    pathname === ROUTES.FORGOT_PASSWORD ||
+    pathname === ROUTES.RESET_PASSWORD
+  )
+}
 
 /** Default landing path for a signed-in role (ops staff → desk, not storefront). */
 export function homePathForRole(user) {
@@ -141,7 +188,6 @@ export const HIDE_CATEGORY_NAV_PATHS = [
   ROUTES.SELLER,
   ROUTES.TERMS,
   ROUTES.PRIVACY,
-  ROUTES.REFUNDS,
   ROUTES.CONTACT,
   ROUTES.ABOUT,
 ]

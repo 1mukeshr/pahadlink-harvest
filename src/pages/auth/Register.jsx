@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { UserIcon, MailIcon, GoogleIcon } from '../../components/icons'
 import AuthLayout from '../../components/auth/AuthLayout'
 import PasswordField from '../../components/auth/PasswordField'
 import { useAuth } from '../../context/AuthContext'
 import {
   ROUTES,
+  ROLES,
+  homePathForRole,
   postCheckoutLoginState,
   resolvePostAuthPath,
 } from '../../config'
@@ -23,7 +25,15 @@ function resolveReturnPath(from) {
 const Register = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const { register, loginWithGoogle, setError } = useAuth()
+  const {
+    register,
+    loginWithGoogle,
+    logout,
+    setError,
+    isAuthenticated,
+    user,
+    loading,
+  } = useAuth()
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -37,6 +47,25 @@ const Register = () => {
   const intent = location.state?.intent
   const isCheckoutIntent =
     intent === 'checkout' || from.startsWith(ROUTES.CHECKOUT)
+
+  // Already signed in → leave the form (staff → desk, customer → home/return path).
+  if (!loading && isAuthenticated && user) {
+    if (user.role === ROLES.ADMIN || user.role === ROLES.SELLER) {
+      return <Navigate to={homePathForRole(user)} replace />
+    }
+    const path = resolvePostAuthPath(user, from, intent)
+    return (
+      <Navigate
+        to={path}
+        replace
+        state={
+          isCheckoutIntent && path === ROUTES.HOME
+            ? postCheckoutLoginState()
+            : undefined
+        }
+      />
+    )
+  }
 
   const onChange = (e) => {
     const { name, value, type, checked } = e.target
@@ -103,8 +132,20 @@ const Register = () => {
     setMessage('')
     setSubmitting(true)
     try {
-      const user = await loginWithGoogle()
-      goAfterAuth(user)
+      const nextUser = await loginWithGoogle()
+      if (
+        nextUser?.role === ROLES.ADMIN ||
+        nextUser?.role === ROLES.SELLER
+      ) {
+        logout()
+        setMessage(
+          nextUser.role === ROLES.ADMIN
+            ? 'Admin accounts sign in at the Admin Portal only — open /admin/login.'
+            : 'Seller accounts sign in at the Admin Portal only — open /admin/login.'
+        )
+        return
+      }
+      goAfterAuth(nextUser)
     } catch (err) {
       setMessage(err.message || 'Google sign-in failed')
     } finally {
@@ -117,7 +158,10 @@ const Register = () => {
       <form className="auth-form" onSubmit={onSubmit} noValidate>
         {message ? (
           <p className="auth-alert auth-alert--error" role="alert">
-            {message}
+            {message}{' '}
+            {message.includes('Admin Portal') ? (
+              <Link to={ROUTES.ADMIN_LOGIN}>Go to admin login</Link>
+            ) : null}
           </p>
         ) : null}
 

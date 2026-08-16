@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import {
   fetchInventory,
   fetchOrders,
@@ -11,15 +11,15 @@ import {
 } from '../services/orderService'
 import { getProductById } from '../data/siteData'
 import { ROUTES } from '../config'
-import { CopyIcon, CheckIcon, SearchIcon, RefreshIcon, PrintIcon, DownloadIcon } from '../components/icons'
+import { CopyIcon, CheckIcon, PrintIcon, DownloadIcon } from '../components/icons'
 import OrderInvoice, { downloadOrderInvoice } from '../components/orders/OrderInvoice'
 import AdminLayout from './AdminLayout'
+import { useAdminHeaderSearch } from './adminChrome'
 import { GST_RATE_PERCENT, splitInclusiveGst, allocateGst } from '../data/gst'
 import {
   StatusDonut,
   OrdersBarChart,
   RevenueSparkline,
-  KpiSpark,
   HorizontalBars,
   StockHealthBar,
   buildPeriodSeries,
@@ -33,6 +33,24 @@ import {
 } from './AdminCharts'
 
 const formatPrice = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`
+
+function PeriodSwitch({ period, onChange }) {
+  return (
+    <div className="admin-period admin-period--panel" role="group" aria-label="Time range">
+      {PERIOD_OPTIONS.map((opt) => (
+        <button
+          key={opt.key}
+          type="button"
+          className={`admin-period__btn${period === opt.key ? ' is-active' : ''}`}
+          onClick={() => onChange(opt.key)}
+          aria-pressed={period === opt.key}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 const formatDate = (iso) => {
   if (!iso) return '-'
@@ -117,23 +135,14 @@ const ADMIN_NEXT = {
   confirmed: [
     { status: 'processing', label: 'Mark packed' },
     { status: 'shipped', label: 'Ship' },
-    { status: 'cancelled', label: 'Cancel' },
   ],
-  processing: [
-    { status: 'shipped', label: 'Ship' },
-    { status: 'cancelled', label: 'Cancel' },
-  ],
+  processing: [{ status: 'shipped', label: 'Ship' }],
   shipped: [
     { status: 'out_for_delivery', label: 'Out for delivery' },
     { status: 'delivered', label: 'Mark delivered' },
   ],
   out_for_delivery: [{ status: 'delivered', label: 'Mark delivered' }],
   delivered: [],
-  return_requested: [
-    { status: 'returned', label: 'Accept return' },
-    { status: 'delivered', label: 'Reject return' },
-  ],
-  returned: [],
   cancelled: [],
 }
 
@@ -149,7 +158,6 @@ const SELLER_NEXT = {
     { status: 'delivered', label: 'Mark delivered' },
   ],
   out_for_delivery: [{ status: 'delivered', label: 'Mark delivered' }],
-  return_requested: [{ status: 'returned', label: 'Accept return' }],
 }
 
 const STATUS_COLORS = {
@@ -160,8 +168,6 @@ const STATUS_COLORS = {
   out_for_delivery: '#0d8a5a',
   delivered: '#0a4f33',
   cancelled: '#c0394f',
-  return_requested: '#c45c3a',
-  returned: '#6b8075',
 }
 
 const DANGER_STATUSES = new Set(['cancelled'])
@@ -174,7 +180,6 @@ export default function OrdersDesk({
   const isAdmin = mode === 'admin'
   const showDashboard = view === 'full' || view === 'dashboard'
   const showOrders = view === 'full' || view === 'orders'
-  const showInventory = isAdmin && (view === 'full' || view === 'orders' || view === 'dashboard')
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const title =
@@ -203,7 +208,6 @@ export default function OrdersDesk({
   const [message, setMessage] = useState('')
   const [copiedId, setCopiedId] = useState('')
   const [orderPage, setOrderPage] = useState(1)
-  const [updatedAt, setUpdatedAt] = useState(null)
   const [period, setPeriod] = useState('week')
   const [detailOrder, setDetailOrder] = useState(null)
   const [invoiceOpen, setInvoiceOpen] = useState(false)
@@ -214,6 +218,20 @@ export default function OrdersDesk({
     const t = setTimeout(() => setDebouncedQuery(query.trim()), 320)
     return () => clearTimeout(t)
   }, [query])
+
+  useAdminHeaderSearch({
+    enabled: showOrders,
+    placeholder: 'Search order, name, email, tracking',
+    value: query,
+    onChange: (e) => setQuery(e.target.value),
+    onClear: () => {
+      setQuery('')
+      setDebouncedQuery('')
+      setFilter('')
+    },
+    onSubmit: () => setDebouncedQuery(query.trim()),
+    'aria-label': 'Search orders',
+  })
 
   useEffect(() => {
     if (!detailOrder) return undefined
@@ -263,7 +281,6 @@ export default function OrdersDesk({
       setOrders(list)
       setAllOrders(analytics)
       setStats(st)
-      setUpdatedAt(new Date())
       setDetailOrder((prev) => {
         if (!prev) return null
         return (
@@ -301,8 +318,6 @@ export default function OrdersDesk({
         'shipped',
         'out_for_delivery',
         'delivered',
-        'return_requested',
-        'returned',
         'cancelled',
       ]
     }
@@ -314,7 +329,6 @@ export default function OrdersDesk({
       'shipped',
       'out_for_delivery',
       'delivered',
-      'return_requested',
     ]
   }, [isAdmin])
 
@@ -323,7 +337,7 @@ export default function OrdersDesk({
     return statusOptions.map((key) => ({
       key,
       label: key ? STATUS_LABELS[key] || key : 'All',
-      count: key ? s[key] || 0 : s.total || 0,
+      count: !key ? s.total || 0 : s[key] || 0,
     }))
   }, [statusOptions, stats])
 
@@ -496,7 +510,7 @@ export default function OrdersDesk({
   const weekOrders = daily.reduce((s, d) => s + d.value, 0)
   const weekRevenue = daily.reduce((s, d) => s + d.revenue, 0)
   const needsAction = isAdmin
-    ? (stats?.pending || 0) + (stats?.return_requested || stats?.returns || 0)
+    ? stats?.pending || 0
     : (stats?.pending || 0) + (stats?.confirmed || 0) + (stats?.processing || 0)
 
   const orderPageCount = Math.max(1, Math.ceil(orders.length / ORDER_PAGE_SIZE))
@@ -507,84 +521,12 @@ export default function OrdersDesk({
   const desk = (
     <>
       <div className="admin-desk">
-      <header className={`admin-head${showOrders ? ' admin-head--with-search' : ''}`}>
+      <header className="admin-head">
         <div className="admin-head__copy">
           <h1>{title}</h1>
         </div>
-        {showOrders && (
-          <div className="admin-head__search">
-            <form
-              className="admin-toolbar"
-              onSubmit={(e) => {
-                e.preventDefault()
-                setDebouncedQuery(query.trim())
-              }}
-            >
-              <label className="admin-toolbar__search">
-                <span className="admin-toolbar__search-ico" aria-hidden="true">
-                  <SearchIcon size={16} />
-                </span>
-                <input
-                  type="search"
-                  placeholder="Search order, name, email, tracking"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  aria-label="Search orders"
-                />
-                {(query || statusFilter) && (
-                  <button
-                    type="button"
-                    className="admin-toolbar__clear"
-                    onClick={() => {
-                      setQuery('')
-                      setDebouncedQuery('')
-                      setFilter('')
-                    }}
-                    aria-label="Clear search and filters"
-                    title="Clear"
-                  >
-                    ×
-                  </button>
-                )}
-              </label>
-            </form>
-          </div>
-        )}
-        <div className="admin-head__actions">
-          <div className="admin-period" role="group" aria-label="Time range">
-            {PERIOD_OPTIONS.map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                className={`admin-period__btn${period === opt.key ? ' is-active' : ''}`}
-                onClick={() => setPeriod(opt.key)}
-                aria-pressed={period === opt.key}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-          {updatedAt && (
-            <span className="admin-head__meta" title={updatedAt.toLocaleString('en-IN')}>
-              Updated {updatedAt.toLocaleTimeString('en-IN', {
-                hour: 'numeric',
-                minute: '2-digit',
-              })}
-            </span>
-          )}
-          <button
-            type="button"
-            className={`admin-btn admin-btn--ghost admin-btn--icon${
-              loading ? ' is-spinning' : ''
-            }`}
-            onClick={load}
-            disabled={loading}
-            aria-label={loading ? 'Refreshing orders' : 'Refresh orders'}
-            title={loading ? 'Refreshing…' : 'Refresh'}
-          >
-            <RefreshIcon size={16} />
-          </button>
-          {view === 'dashboard' && isAdmin && (
+        {view === 'dashboard' && isAdmin ? (
+          <div className="admin-head__actions">
             <button
               type="button"
               className="admin-btn"
@@ -592,8 +534,8 @@ export default function OrdersDesk({
             >
               Manage orders
             </button>
-          )}
-        </div>
+          </div>
+        ) : null}
       </header>
 
       {showDashboard && stats && (
@@ -607,10 +549,6 @@ export default function OrdersDesk({
           >
             <div className="admin-kpi__top">
               <span>Total orders</span>
-              <KpiSpark
-                values={daily.map((d) => d.value)}
-                labels={daily.map((d) => d.label)}
-              />
             </div>
             <strong>{stats.total}</strong>
             <em>
@@ -621,11 +559,6 @@ export default function OrdersDesk({
             <article className="admin-kpi__card admin-kpi__card--accent">
               <div className="admin-kpi__top">
                 <span>Paid revenue</span>
-                <KpiSpark
-                  values={daily.map((d) => d.revenue)}
-                  labels={daily.map((d) => d.label)}
-                  tone="money"
-                />
               </div>
               <strong>{formatPrice(stats.revenue)}</strong>
               <em>
@@ -642,16 +575,11 @@ export default function OrdersDesk({
           >
             <div className="admin-kpi__top">
               <span>Needs action</span>
-              <KpiSpark
-                values={daily.map((d) => d.value)}
-                labels={daily.map((d) => d.label)}
-                tone="warn"
-              />
             </div>
             <strong>{needsAction}</strong>
             <em>
               {isAdmin
-                ? 'Pending + returns'
+                ? 'Pending orders'
                 : 'Pending + confirmed + processing'}
             </em>
           </button>
@@ -666,11 +594,6 @@ export default function OrdersDesk({
           >
             <div className="admin-kpi__top">
               <span>In transit</span>
-              <KpiSpark
-                values={daily.map((d) => d.value)}
-                labels={daily.map((d) => d.label)}
-                tone="info"
-              />
             </div>
             <strong>
               {(stats.shipped || 0) + (stats.out_for_delivery || 0)}
@@ -686,35 +609,44 @@ export default function OrdersDesk({
       {showDashboard && (
       <div className="admin-dash admin-dash--graphs">
         <section className="admin-panel-card admin-panel-card--wide">
-          <header className="admin-panel-card__head">
-            <h2>{chartTitle}</h2>
-            <p>{rangeHint}</p>
+          <header className="admin-panel-card__head admin-panel-card__head--tools">
+            <div className="admin-panel-card__copy">
+              <h2>{chartTitle}</h2>
+              <p>{rangeHint}</p>
+            </div>
+            <PeriodSwitch period={period} onChange={setPeriod} />
           </header>
           <OrdersBarChart series={daily} period={period} />
         </section>
 
         <section className="admin-panel-card admin-panel-card--side">
-          <header className="admin-panel-card__head">
-            <h2>Status</h2>
-            <p>Tap to open orders</p>
+          <header className="admin-panel-card__head admin-panel-card__head--tools">
+            <div className="admin-panel-card__copy">
+              <h2>Status</h2>
+              <p>{rangeHint} · tap to open orders</p>
+            </div>
+            <PeriodSwitch period={period} onChange={setPeriod} />
           </header>
           <StatusDonut
             segments={donutSegments}
-            size={152}
+            size={168}
             onSelect={(key) => setFilter(key)}
           />
         </section>
 
         {isAdmin && (
           <section className="admin-panel-card admin-panel-card--wide">
-            <header className="admin-panel-card__head">
-              <h2>{revenueTitle}</h2>
-              <p>
-                {rangeHint} · total{' '}
-                <strong className="admin-panel-card__inline">
-                  {formatPrice(weekRevenue)}
-                </strong>
-              </p>
+            <header className="admin-panel-card__head admin-panel-card__head--tools">
+              <div className="admin-panel-card__copy">
+                <h2>{revenueTitle}</h2>
+                <p>
+                  {rangeHint} · total{' '}
+                  <strong className="admin-panel-card__inline">
+                    {formatPrice(weekRevenue)}
+                  </strong>
+                </p>
+              </div>
+              <PeriodSwitch period={period} onChange={setPeriod} />
             </header>
             <RevenueSparkline
               period={period}
@@ -725,9 +657,12 @@ export default function OrdersDesk({
 
         {isAdmin && (
           <section className="admin-panel-card admin-panel-card--side">
-            <header className="admin-panel-card__head">
-              <h2>Payments</h2>
-              <p>Paid revenue by method</p>
+            <header className="admin-panel-card__head admin-panel-card__head--tools">
+              <div className="admin-panel-card__copy">
+                <h2>Payments</h2>
+                <p>{rangeHint} · paid by method</p>
+              </div>
+              <PeriodSwitch period={period} onChange={setPeriod} />
             </header>
             <HorizontalBars
               rows={paymentSeries}
@@ -740,9 +675,12 @@ export default function OrdersDesk({
 
         {isAdmin && (
           <section className="admin-panel-card admin-panel-card--third">
-            <header className="admin-panel-card__head">
-              <h2>Categories</h2>
-              <p>Units sold</p>
+            <header className="admin-panel-card__head admin-panel-card__head--tools">
+              <div className="admin-panel-card__copy">
+                <h2>Categories</h2>
+                <p>{rangeHint} · units sold</p>
+              </div>
+              <PeriodSwitch period={period} onChange={setPeriod} />
             </header>
             <HorizontalBars
               rows={categorySeries}
@@ -755,9 +693,12 @@ export default function OrdersDesk({
 
         {isAdmin && (
           <section className="admin-panel-card admin-panel-card--third">
-            <header className="admin-panel-card__head">
-              <h2>Bestsellers</h2>
-              <p>By units</p>
+            <header className="admin-panel-card__head admin-panel-card__head--tools">
+              <div className="admin-panel-card__copy">
+                <h2>Bestsellers</h2>
+                <p>{rangeHint} · by units</p>
+              </div>
+              <PeriodSwitch period={period} onChange={setPeriod} />
             </header>
             <HorizontalBars
               rows={topProducts}
@@ -814,7 +755,9 @@ export default function OrdersDesk({
               </button>
             ))}
           </div>
+          <PeriodSwitch period={period} onChange={setPeriod} />
         </div>
+        <p className="admin-orders-section__range">{rangeHint}</p>
 
         {error && <p className="admin-alert">{error}</p>}
         {message && (
@@ -861,10 +804,7 @@ export default function OrdersDesk({
                   const itemSummary = (order.items || []).slice(0, 2)
                   const extraItems = Math.max(0, (order.items || []).length - 2)
                   const shipLine = formatShipLine(order)
-                  const showDetail =
-                    showTracking ||
-                    Boolean(order.returnReason) ||
-                    Boolean(shipLine)
+                  const showDetail = showTracking || Boolean(shipLine)
 
                   return (
                     <Fragment key={order.id}>
@@ -1008,11 +948,6 @@ export default function OrdersDesk({
                                 <span className="admin-card__ship-text">{shipLine}</span>
                               </p>
                             )}
-                            {order.returnReason && (
-                              <p className="admin-card__return">
-                                Return: {order.returnReason}
-                              </p>
-                            )}
                             {showTracking && (
                               <div className="admin-track">
                                 <input
@@ -1094,29 +1029,6 @@ export default function OrdersDesk({
           </div>
         )}
       </section>
-      )}
-
-      {showInventory && (
-        <section className="admin-inv-teaser" aria-labelledby="admin-inv-title">
-          <div className="admin-inv-teaser__copy">
-            <h2 id="admin-inv-title">Inventory</h2>
-            <p>
-              {invStats.total} products
-              {invStats.low ? ` · ${invStats.low} low` : ''}
-              {invStats.out ? ` · ${invStats.out} out` : ''}
-            </p>
-          </div>
-          <div className="admin-inv-teaser__chart">
-            <StockHealthBar
-              ok={Math.max(0, invStats.total - invStats.low - invStats.out)}
-              low={invStats.low}
-              out={invStats.out}
-            />
-          </div>
-          <Link to={ROUTES.ADMIN_INVENTORY} className="admin-btn admin-btn--brand">
-            Open inventory
-          </Link>
-        </section>
       )}
       </div>
 
@@ -1261,11 +1173,6 @@ export default function OrdersDesk({
                     </p>
                   )}
                   {order.notes ? <p className="admin-order-popup__notes">{order.notes}</p> : null}
-                  {order.returnReason ? (
-                    <p className="admin-order-popup__return">
-                      Return: {order.returnReason}
-                    </p>
-                  ) : null}
                 </section>
               </div>
 

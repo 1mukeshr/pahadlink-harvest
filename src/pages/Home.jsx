@@ -31,10 +31,18 @@ import whyPahadLink from '../assets/images/banners/why-pahadlink.png'
 
 const REVIEWS_VISIBLE = 3
 
-/**
- * Home UX flow:
- * Banner → Trust → Best Sellers → Offers → Trending → Makers → Handpicked → Why us → Reviews
- */
+function reviewInitials(name = '') {
+  return (
+    name
+      .split(' ')
+      .map((part) => part[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join('')
+      .toUpperCase() || 'PL'
+  )
+}
+
 const Home = () => {
   const location = useLocation()
   const navigate = useNavigate()
@@ -70,10 +78,7 @@ const Home = () => {
     const cardStep = slide
       ? slide.getBoundingClientRect().width + gap
       : track.clientWidth / REVIEWS_VISIBLE
-    const visible = Math.max(
-      1,
-      Math.round(track.clientWidth / cardStep)
-    )
+    const visible = Math.max(1, Math.round(track.clientWidth / cardStep))
     const step = cardStep * visible
     track.scrollBy({
       left: direction === 'next' ? step : -step,
@@ -301,83 +306,80 @@ const Home = () => {
         {/* Social proof */}
         <section className="home-section reviews-section" id="reviews">
           <div className="container">
-            <div className="section-head section-head--row reviews-head">
-              <div>
-                <h2>Loved across India</h2>
-              </div>
+            <div className="section-head reviews-head">
+              <h2>Loved across India</h2>
+              <p>Honest notes from shoppers who ordered hill produce.</p>
             </div>
 
-            <div className="reviews-slider">
-              {homeReviews.length > REVIEWS_VISIBLE && (
-                <>
-                  <button
-                    type="button"
-                    className="reviews-slider__nav reviews-slider__nav--prev"
-                    onClick={() => scrollReviews('prev')}
-                    disabled={!canSlideLeft}
-                    aria-label="Previous reviews"
-                  >
-                    <ArrowLeftIcon size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    className="reviews-slider__nav reviews-slider__nav--next"
-                    onClick={() => scrollReviews('next')}
-                    disabled={!canSlideRight}
-                    aria-label="Next reviews"
-                  >
-                    <ArrowRightIcon size={16} />
-                  </button>
-                </>
-              )}
-              {canSlideLeft && (
-                <div
-                  className="reviews-slider__fade reviews-slider__fade--left"
-                  aria-hidden="true"
-                />
-              )}
-              {canSlideRight && (
-                <div
-                  className="reviews-slider__fade reviews-slider__fade--right"
-                  aria-hidden="true"
-                />
-              )}
-              <div className="reviews-slider__track" ref={reviewsTrackRef}>
-                {homeReviews.map((review) => (
-                  <article key={review.id} className="reviews-slider__slide review-card">
-                    <div className="review-card__top">
-                      <StarRating
-                        rating={review.rating}
-                        className="review-stars"
-                      />
-                      {review.verified ? (
-                        <span className="review-verified">
-                          <CheckCircleIcon size={14} />
-                          Verified
+            {homeReviews.length > 0 ? (
+              <div className="reviews-slider">
+                {homeReviews.length > REVIEWS_VISIBLE ? (
+                  <>
+                    <button
+                      type="button"
+                      className="reviews-slider__nav reviews-slider__nav--prev"
+                      onClick={() => scrollReviews('prev')}
+                      disabled={!canSlideLeft}
+                      aria-label="Previous reviews"
+                    >
+                      <ArrowLeftIcon size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      className="reviews-slider__nav reviews-slider__nav--next"
+                      onClick={() => scrollReviews('next')}
+                      disabled={!canSlideRight}
+                      aria-label="Next reviews"
+                    >
+                      <ArrowRightIcon size={16} />
+                    </button>
+                  </>
+                ) : null}
+
+                <div className="reviews-slider__track" ref={reviewsTrackRef}>
+                  {homeReviews.map((review) => (
+                    <article
+                      key={review.id}
+                      className="reviews-slider__slide review-card"
+                    >
+                      <div className="review-card__rating">
+                        <StarRating
+                          rating={review.rating}
+                          size={15}
+                          className="review-stars"
+                        />
+                        <span className="review-card__score">
+                          {Number(review.rating) || 0}/5
                         </span>
-                      ) : null}
-                    </div>
-                    <p className="review-text">{review.comment}</p>
-                    {review.productName && (
-                      <p className="review-product">Bought {review.productName}</p>
-                    )}
-                    <div className="review-author">
-                      <span className="review-avatar" aria-hidden="true">
-                        {(review.userName || 'PL')
-                          .split(' ')
-                          .map((part) => part[0])
-                          .slice(0, 2)
-                          .join('')}
-                      </span>
-                      <div>
-                        <strong>{review.userName}</strong>
-                        <span>{review.userLocation || 'India'}</span>
+                        {review.verified ? (
+                          <span className="review-verified">
+                            <CheckCircleIcon size={13} />
+                            Verified
+                          </span>
+                        ) : null}
                       </div>
-                    </div>
-                  </article>
-                ))}
+
+                      <p className="review-text">{review.comment}</p>
+
+                      <footer className="review-card__foot">
+                        <div className="review-author">
+                          <span className="review-avatar" aria-hidden="true">
+                            {reviewInitials(review.userName)}
+                          </span>
+                          <div className="review-author__meta">
+                            <strong>{review.userName}</strong>
+                            <span>{review.userLocation || 'India'}</span>
+                          </div>
+                        </div>
+                        {review.productName ? (
+                          <p className="review-product">{review.productName}</p>
+                        ) : null}
+                      </footer>
+                    </article>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : null}
           </div>
         </section>
 

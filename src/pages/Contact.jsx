@@ -22,7 +22,6 @@ const EMAIL = 'care@pahadlink.com'
 const TOPICS = [
   'Order help',
   'Shipping',
-  'Returns & refunds',
   'Product query',
   'Bulk / wholesale',
   'Partnership',

@@ -43,7 +43,6 @@ import {
 import {
   digitsPhone,
   firstCheckoutErrorField,
-  isCheckoutDetailsReady,
   mobileValidationMessage,
   validateCheckoutForm,
 } from '../../utils/checkoutValidation'
@@ -411,11 +410,6 @@ const Checkout = () => {
   const shipLeft = Math.max(0, FREE_SHIP_AT - cartTotal)
   const shipProgress = Math.min(100, Math.round((cartTotal / FREE_SHIP_AT) * 100))
 
-  const formReady = useMemo(() => isCheckoutDetailsReady(form), [form])
-
-  const canPlaceOrder =
-    Boolean(cart.length) && formReady && Boolean(payment) && !placing
-
   /** Allow click so missing phone / fields show validation (not only disabled state) */
   const canAttemptOrder = Boolean(cart.length) && Boolean(payment) && !placing
 
@@ -490,7 +484,7 @@ const Checkout = () => {
   const onChange = (e) => {
     const { name, value } = e.target
     const nextValue =
-      name === 'phone' ? value.replace(/\D/g, '').slice(0, 10) : value
+      name === 'phone' ? digitsPhone(value) : value
     setForm((prev) => ({ ...prev, [name]: nextValue }))
     if (errors[name]) {
       setErrors((prev) => {

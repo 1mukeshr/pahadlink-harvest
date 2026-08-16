@@ -9,8 +9,8 @@ import {
 } from '../../utils/themeColors'
 
 const PRESETS = [
-  { label: 'PahadLink', primary: '#E62978', secondary: '#0A4F33' },
-  { label: 'Forest', primary: '#0A4F33', secondary: '#E62978' },
+  { label: 'PahadLink', primary: '#FF9800', secondary: '#0A4F33' },
+  { label: 'Forest first', primary: '#0A4F33', secondary: '#FF9800' },
 ]
 
 const PaletteIcon = ({ size = 20 }) => (

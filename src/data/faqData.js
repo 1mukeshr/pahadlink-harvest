@@ -53,12 +53,8 @@ export const faqsByPage = {
       a: 'Orders are packed quickly and usually ship within 24-48 hours on working days, then take 2-5 days in transit.',
     },
     {
-      q: 'What if the product arrives damaged?',
-      a: 'Report it within 7 days with your order ID and photos. We will arrange a replacement or refund as per our refunds policy.',
-    },
-    {
-      q: 'Can I return opened food items?',
-      a: 'Food and personal-care items can be returned only if damaged, wrong, or defective. See our Refunds page for full rules.',
+      q: 'What if there is an issue with my order?',
+      a: 'Contact care@pahadlink.com or WhatsApp support with your order ID and details. We reply within 1 business day.',
     },
   ],
 
@@ -70,10 +66,6 @@ export const faqsByPage = {
     {
       q: 'Do you offer free shipping?',
       a: 'Yes. First order is free delivery. Later orders are free above ₹499, otherwise ₹39.',
-    },
-    {
-      q: 'How do returns work?',
-      a: 'Damaged or wrong items can be reported within 7 days of delivery. Share your order details with us.',
     },
     {
       q: 'What are support hours?',
@@ -99,11 +91,7 @@ export const faqsByPage = {
   legal: [
     {
       q: 'Where can I read full policy details?',
-      a: 'Use the tabs above for Privacy, Terms, and Refunds. Each page explains the rules in plain language.',
-    },
-    {
-      q: 'How do I raise a refund request?',
-      a: 'Contact care@pahadlink.com or WhatsApp us with your order ID within the window mentioned in the Refunds policy.',
+      a: 'Use Privacy and Terms for our policies in plain language.',
     },
     {
       q: 'Who do I contact for policy questions?',

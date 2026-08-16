@@ -1,12 +1,14 @@
-import { useEffect, useState } from 'react'
-import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { ROUTES } from '../config'
 import { useAuth } from '../context/AuthContext'
+import { LogOutIcon, SearchIcon } from '../components/icons/Icons'
+import { AdminChromeProvider, useAdminChrome } from './adminChrome'
 import logo from '../assets/images/logo.png'
 import './admin.css'
 
 const BASE = import.meta.env.BASE_URL || '/'
-const FAVICON_PNG = `${BASE}favicon.png`
+const FAVICON_PNG = `${BASE}favicon-32.png`
 const FAVICON_ICO = `${BASE}favicon.ico`
 
 function initialsFrom(name, email) {
@@ -18,21 +20,79 @@ function initialsFrom(name, email) {
   return source.slice(0, 2).toUpperCase()
 }
 
-export default function AdminLayout({ children, mode = 'admin' }) {
+function AdminTopbarSearch() {
+  const { headerSearch } = useAdminChrome()
+
+  return (
+    <div className="admin-topbar__search">
+      {headerSearch ? (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault()
+            headerSearch.onSubmit?.(event)
+          }}
+          role="search"
+        >
+          <label className="admin-toolbar__search">
+            <span className="admin-toolbar__search-ico" aria-hidden="true">
+              <SearchIcon size={16} />
+            </span>
+            <input
+              type="search"
+              placeholder={headerSearch.placeholder}
+              value={headerSearch.value}
+              onChange={headerSearch.onChange}
+              aria-label={headerSearch.ariaLabel}
+            />
+            {headerSearch.value ? (
+              <button
+                type="button"
+                className="admin-toolbar__clear"
+                onClick={headerSearch.onClear}
+                aria-label="Clear search"
+                title="Clear"
+              >
+                ×
+              </button>
+            ) : null}
+          </label>
+        </form>
+      ) : null}
+    </div>
+  )
+}
+
+function AdminLayoutShell({ children, mode = 'admin' }) {
   const { user, logout, isAdmin } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [navOpen, setNavOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const accountRef = useRef(null)
 
-  const portalLabel =
-    mode === 'admin'
-      ? 'Admin'
-      : isAdmin
-        ? 'Sellers'
-        : 'Seller'
+  const displayName = user?.name || user?.username || 'Account'
+  const displayEmail = user?.email || user?.username || 'Signed in'
 
-  const roleLabel =
-    user?.role === 'admin' ? 'Admin' : user?.role === 'seller' ? 'Seller' : user?.role
+  const go = (to) => (event) => {
+    event.preventDefault()
+    setNavOpen(false)
+    setAccountOpen(false)
+    if (
+      location.pathname === to &&
+      !location.search &&
+      !location.hash
+    ) {
+      return
+    }
+    navigate(to)
+  }
+
+  const linkClass = (to, { end = false } = {}) => {
+    const active = end
+      ? location.pathname === to
+      : location.pathname === to || location.pathname.startsWith(`${to}/`)
+    return `admin-nav__link${active ? ' is-active' : ''}`
+  }
 
   useEffect(() => {
     const prevTitle = document.title
@@ -40,7 +100,7 @@ export default function AdminLayout({ children, mode = 'admin' }) {
       mode === 'admin'
         ? 'PahadLink Admin'
         : isAdmin
-          ? 'PahadLink Admin · Sellers'
+          ? 'PahadLink Admin · Sellers desk'
           : 'PahadLink Seller'
 
     const iconLinks = [
@@ -68,39 +128,39 @@ export default function AdminLayout({ children, mode = 'admin' }) {
 
   useEffect(() => {
     setNavOpen(false)
-  }, [mode, location.pathname])
+    setAccountOpen(false)
+  }, [mode, location.pathname, location.search])
+
+  useEffect(() => {
+    if (!accountOpen) return undefined
+
+    const onPointerDown = (event) => {
+      if (!accountRef.current?.contains(event.target)) {
+        setAccountOpen(false)
+      }
+    }
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setAccountOpen(false)
+    }
+
+    document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+    }
+  }, [accountOpen])
 
   const onLogout = () => {
+    setAccountOpen(false)
     logout()
-    navigate(ROUTES.LOGIN, { replace: true })
+    navigate(ROUTES.ADMIN_LOGIN, { replace: true })
   }
 
   return (
     <div className="admin-app" data-admin-mode={mode}>
       <div className={`admin-shell${navOpen ? ' is-nav-open' : ''}`}>
-        <header className="admin-topbar">
-          <button
-            type="button"
-            className="admin-topbar__menu"
-            aria-expanded={navOpen}
-            aria-controls="admin-nav"
-            onClick={() => setNavOpen((o) => !o)}
-          >
-            <span />
-            <span />
-            <span />
-            <span className="visually-hidden">Menu</span>
-          </button>
-          <div className="admin-topbar__brand">
-            <img src={logo} alt="" className="admin-topbar__logo" />
-            <div>
-              <strong>PahadLink</strong>
-              <em>{portalLabel}</em>
-            </div>
-          </div>
-          <span className="admin-topbar__role">{roleLabel}</span>
-        </header>
-
         {navOpen && (
           <button
             type="button"
@@ -111,48 +171,38 @@ export default function AdminLayout({ children, mode = 'admin' }) {
         )}
 
         <aside className="admin-nav" id="admin-nav" aria-label="Admin navigation">
-          <div className="admin-nav__brand">
-            <img src={logo} alt="PahadLink" className="admin-nav__logo" />
-            <span className="admin-nav__portal">{portalLabel}</span>
-          </div>
-
           <p className="admin-nav__section">Workspace</p>
           <nav className="admin-nav__links">
             {isAdmin && (
-            <NavLink
-              to={ROUTES.ADMIN}
-              className={({ isActive }) =>
-                `admin-nav__link${isActive ? ' is-active' : ''}`
-              }
-              end
-              onClick={() => setNavOpen(false)}
-            >
-              <span className="admin-nav__ico" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                  <path
-                    d="M4 19V9l4 3 4-7 4 5 4-3v12H4Z"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M4 19h16"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                  />
-                </svg>
-              </span>
-              Dashboard
-            </NavLink>
+              <a
+                href={ROUTES.ADMIN}
+                className={linkClass(ROUTES.ADMIN, { end: true })}
+                onClick={go(ROUTES.ADMIN)}
+              >
+                <span className="admin-nav__ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                    <path
+                      d="M4 19V9l4 3 4-7 4 5 4-3v12H4Z"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M4 19h16"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+                Dashboard
+              </a>
             )}
             {isAdmin && (
-              <NavLink
-                to={ROUTES.ADMIN_ORDERS}
-                className={({ isActive }) =>
-                  `admin-nav__link${isActive ? ' is-active' : ''}`
-                }
-                onClick={() => setNavOpen(false)}
+              <a
+                href={ROUTES.ADMIN_ORDERS}
+                className={linkClass(ROUTES.ADMIN_ORDERS, { end: true })}
+                onClick={go(ROUTES.ADMIN_ORDERS)}
               >
                 <span className="admin-nav__ico" aria-hidden="true">
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
@@ -176,15 +226,13 @@ export default function AdminLayout({ children, mode = 'admin' }) {
                   </svg>
                 </span>
                 Orders
-              </NavLink>
+              </a>
             )}
             {isAdmin && (
-              <NavLink
-                to={ROUTES.ADMIN_INVENTORY}
-                className={({ isActive }) =>
-                  `admin-nav__link${isActive ? ' is-active' : ''}`
-                }
-                onClick={() => setNavOpen(false)}
+              <a
+                href={ROUTES.ADMIN_INVENTORY}
+                className={linkClass(ROUTES.ADMIN_INVENTORY, { end: true })}
+                onClick={go(ROUTES.ADMIN_INVENTORY)}
               >
                 <span className="admin-nav__ico" aria-hidden="true">
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
@@ -204,15 +252,13 @@ export default function AdminLayout({ children, mode = 'admin' }) {
                   </svg>
                 </span>
                 Inventory
-              </NavLink>
+              </a>
             )}
             {isAdmin && (
-              <NavLink
-                to={ROUTES.ADMIN_LEADS}
-                className={({ isActive }) =>
-                  `admin-nav__link${isActive ? ' is-active' : ''}`
-                }
-                onClick={() => setNavOpen(false)}
+              <a
+                href={ROUTES.ADMIN_LEADS}
+                className={linkClass(ROUTES.ADMIN_LEADS, { end: true })}
+                onClick={go(ROUTES.ADMIN_LEADS)}
               >
                 <span className="admin-nav__ico" aria-hidden="true">
                   <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
@@ -238,14 +284,12 @@ export default function AdminLayout({ children, mode = 'admin' }) {
                   </svg>
                 </span>
                 Leads
-              </NavLink>
+              </a>
             )}
-            <NavLink
-              to={ROUTES.SELLER}
-              className={({ isActive }) =>
-                `admin-nav__link${isActive ? ' is-active' : ''}`
-              }
-              onClick={() => setNavOpen(false)}
+            <a
+              href={ROUTES.SELLER}
+              className={linkClass(ROUTES.SELLER, { end: true })}
+              onClick={go(ROUTES.SELLER)}
             >
               <span className="admin-nav__ico" aria-hidden="true">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
@@ -261,37 +305,84 @@ export default function AdminLayout({ children, mode = 'admin' }) {
                   />
                 </svg>
               </span>
-              Sellers
-            </NavLink>
+              Sellers desk
+            </a>
           </nav>
-
-          <div className="admin-nav__foot">
-            <div className="admin-nav__user">
-              <span className="admin-nav__avatar" aria-hidden="true">
-                {initialsFrom(user?.name, user?.email || user?.username)}
-              </span>
-              <div className="admin-nav__user-text">
-                <strong>{user?.name || user?.username || mode}</strong>
-                <em>{user?.email || 'Signed in'}</em>
-              </div>
-            </div>
-            {mode === 'seller' && isAdmin && (
-              <Link
-                to={ROUTES.ADMIN}
-                className="admin-nav__ghost"
-                onClick={() => setNavOpen(false)}
-              >
-                Admin dashboard
-              </Link>
-            )}
-            <button type="button" className="admin-nav__ghost admin-nav__ghost--danger" onClick={onLogout}>
-              Log out
-            </button>
-          </div>
         </aside>
 
-        <div className="admin-main">{children}</div>
+        <div className="admin-workspace">
+          <header className="admin-topbar">
+            <div className="admin-topbar__left">
+              <button
+                type="button"
+                className="admin-topbar__menu"
+                aria-expanded={navOpen}
+                aria-controls="admin-nav"
+                onClick={() => setNavOpen((o) => !o)}
+              >
+                <span />
+                <span />
+                <span />
+                <span className="visually-hidden">Menu</span>
+              </button>
+
+              <div className="admin-topbar__brand">
+                <img src={logo} alt="PahadLink" className="admin-topbar__logo" />
+              </div>
+            </div>
+
+            <AdminTopbarSearch />
+
+            <div className="admin-topbar__account" ref={accountRef}>
+              <button
+                type="button"
+                className={`admin-topbar__trigger${accountOpen ? ' is-open' : ''}`}
+                aria-expanded={accountOpen}
+                aria-haspopup="menu"
+                aria-label={`Account menu for ${displayName}`}
+                onClick={() => setAccountOpen((open) => !open)}
+              >
+                <span className="admin-topbar__avatar" aria-hidden="true">
+                  {initialsFrom(user?.name, user?.email || user?.username)}
+                </span>
+              </button>
+
+              {accountOpen ? (
+                <div className="admin-topbar__menu-panel" role="menu">
+                  <div className="admin-topbar__menu-head">
+                    <span className="admin-topbar__avatar" aria-hidden="true">
+                      {initialsFrom(user?.name, user?.email || user?.username)}
+                    </span>
+                    <div>
+                      <strong>{displayName}</strong>
+                      <em>{displayEmail}</em>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="admin-topbar__menu-item admin-topbar__menu-item--danger"
+                    role="menuitem"
+                    onClick={onLogout}
+                  >
+                    <LogOutIcon size={18} />
+                    <span>Log out</span>
+                  </button>
+                </div>
+              ) : null}
+            </div>
+          </header>
+
+          <div className="admin-main">{children}</div>
+        </div>
       </div>
     </div>
+  )
+}
+
+export default function AdminLayout({ children, mode = 'admin' }) {
+  return (
+    <AdminChromeProvider>
+      <AdminLayoutShell mode={mode}>{children}</AdminLayoutShell>
+    </AdminChromeProvider>
   )
 }

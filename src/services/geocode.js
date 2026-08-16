@@ -7,7 +7,7 @@
 const NOMINATIM_HEADERS = {
   Accept: 'application/json',
   'User-Agent':
-    'PahadLink/1.0 (delivery-address; https://1mukeshr.github.io/pahadlink/)',
+    'PahadLink/1.0 (delivery-address; https://1mukeshr.github.io/pahadlink-harvest/)',
 }
 
 function mapsKey() {

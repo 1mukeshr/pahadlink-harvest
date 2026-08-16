@@ -1,5 +1,6 @@
 /**
  * Full functionality smoke test against a running API.
+ * Temp *@pahadlink.test users are removed after the run.
  * Usage: node scripts/test-full.mjs [API_BASE]
  */
 import {
@@ -17,6 +18,7 @@ import {
 } from '../shared/constants.js'
 import { STOCK_DEFAULTS } from '../shared/inventoryDefaults.js'
 import { buildRatingSummary } from '../shared/ratings.js'
+import { purgeTestUsers } from './lib/purge-test-users.mjs'
 
 const base = (process.argv[2] || 'http://127.0.0.1:5000/api').replace(/\/$/, '')
 const fails = []
@@ -44,12 +46,20 @@ async function api(path, opts) {
 
 async function main() {
   // --- shared domain ---
-  if (PRODUCT_PRICING.length !== 14) bad('catalog.count', PRODUCT_PRICING.length)
-  else ok('catalog.count=14')
+  if (PRODUCT_PRICING.length !== 15) bad('catalog.count', PRODUCT_PRICING.length)
+  else ok('catalog.count=15')
 
   if (!PRODUCT_PRICING.some((p) => p.id === 'pahadi-pichodi')) {
     bad('catalog.pichodi', 'missing pahadi-pichodi')
   } else ok('catalog.pichodi')
+
+  if (!PRODUCT_PRICING.some((p) => p.id === 'aipan-art')) {
+    bad('catalog.aipan', 'missing aipan-art')
+  } else ok('catalog.aipan')
+
+  if (PRODUCT_PRICING.some((p) => p.id === 'herbal-tea')) {
+    bad('catalog.herbal', 'herbal-tea should be removed')
+  } else ok('catalog.noHerbalTea')
 
   const priced = resolveUnitPrice('pahadi-rajma', '1 kg')
   if (!priced || priced.price !== 479) bad('catalog.price', JSON.stringify(priced))
@@ -122,15 +132,25 @@ async function main() {
   if (coupon.status !== 200 || !coupon.body.ok) bad('api.coupon', JSON.stringify(coupon.body))
   else ok('api.coupon')
 
-  const stamp = Date.now()
+  const stamp = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
   const email = `full_${stamp}@pahadlink.test`
-  const reg = await api('/auth/register', {
+  const password = 'pass1234'
+  let reg = await api('/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'Full Test', email, password: 'pass1234' }),
+    body: JSON.stringify({ name: 'Full Test', email, password }),
   })
-  if (reg.status !== 201 || !reg.body.token) bad('api.register', JSON.stringify(reg.body))
-  else ok('api.register')
+  // If a prior run left this email, sign in instead so order checks still run
+  if (reg.status === 409) {
+    reg = await api('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: email, password }),
+    })
+  }
+  if ((reg.status !== 201 && reg.status !== 200) || !reg.body.token) {
+    bad('api.register', `${reg.status} ${JSON.stringify(reg.body)}`)
+  } else ok('api.register')
 
   const short = await api('/auth/register', {
     method: 'POST',
@@ -151,7 +171,7 @@ async function main() {
     customerPhone: '9876543210',
     paymentMethod: 'cod',
     shippingAddress: {
-      line1: 'Lane 1',
+      line1: '12 Mall Road, Lane 1',
       city: 'Dehradun',
       state: 'Uttarakhand',
       pincode: '248001',
@@ -212,6 +232,13 @@ async function main() {
   if (contact.status === 200 || contact.status === 201) ok('api.contact')
   else bad('api.contact', `${contact.status} ${JSON.stringify(contact.body).slice(0, 100)}`)
 
+  try {
+    const purged = await purgeTestUsers()
+    if (purged) ok(`purged temp users ${purged}`)
+  } catch (err) {
+    bad('purgeTempUsers', err.message || String(err))
+  }
+
   console.log('---')
   if (fails.length) {
     console.log('FULL_SMOKE_FAILED', fails.length)
@@ -221,7 +248,12 @@ async function main() {
   console.log('FULL_SMOKE_PASSED')
 }
 
-main().catch((err) => {
+main().catch(async (err) => {
+  try {
+    await purgeTestUsers()
+  } catch {
+    /* ignore */
+  }
   console.error('FULL_SMOKE_FAILED', err.message)
   process.exit(1)
 })

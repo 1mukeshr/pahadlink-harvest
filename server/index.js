@@ -41,6 +41,8 @@ function isAllowedOrigin(origin) {
   if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(origin)) return true
   // GitHub Pages project + user sites
   if (/^https:\/\/[\w-]+\.github\.io$/i.test(origin)) return true
+  // Vercel preview + production
+  if (/^https:\/\/[\w.-]+\.vercel\.app$/i.test(origin)) return true
   // Phones / other PCs on the same Wi‑Fi (http://192.168.x.x:5173, etc.)
   try {
     const { hostname, protocol } = new URL(origin)

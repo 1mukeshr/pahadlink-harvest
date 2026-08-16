@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { ROUTES, homePathForRole } from '../../config'
+import { ROUTES, homePathForRole, isOpsPlatformPath } from '../../config'
 import PageLoader from '../layout/PageLoader'
 
 /** Redirect guests to login; optionally require specific roles */
@@ -13,21 +13,21 @@ const ProtectedRoute = ({ children, roles, intent }) => {
   }
 
   if (!isAuthenticated) {
-    const from = `${location.pathname}${location.search}${location.hash}`
+    const from = `${location.pathname}${location.search}`
     const resolvedIntent =
       intent ||
       (location.pathname.startsWith('/checkout') ? 'checkout' : 'auth')
 
-    const needsAdminLogin =
-      location.pathname.startsWith('/admin') ||
+    // Ops desk (admin / seller) always uses the separate portal login.
+    const needsOpsLogin =
+      isOpsPlatformPath(location.pathname) ||
       (Array.isArray(roles) &&
-        roles.includes('admin') &&
-        !roles.includes('customer') &&
-        !roles.includes('seller'))
+        roles.some((r) => r === 'admin' || r === 'seller') &&
+        !roles.includes('customer'))
 
     return (
       <Navigate
-        to={needsAdminLogin ? ROUTES.ADMIN_LOGIN : ROUTES.LOGIN}
+        to={needsOpsLogin ? ROUTES.ADMIN_LOGIN : ROUTES.LOGIN}
         replace
         state={{ from, intent: resolvedIntent }}
       />

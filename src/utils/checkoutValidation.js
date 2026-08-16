@@ -6,11 +6,12 @@ export const ADDRESS_MIN_LENGTH = 8
 export const LOCATION_LINE_MIN = 3
 export const LOCATION_AREA_MIN = 3
 
-/** Digits-only Indian mobile (max 10) */
+/** Digits-only Indian mobile (max 10); strips +91 / leading 0 when pasted */
 export function digitsPhone(value) {
-  return String(value || '')
-    .replace(/\D/g, '')
-    .slice(0, 10)
+  let digits = String(value || '').replace(/\D/g, '')
+  if (digits.startsWith('91') && digits.length >= 12) digits = digits.slice(2)
+  else if (digits.startsWith('0') && digits.length === 11) digits = digits.slice(1)
+  return digits.slice(0, 10)
 }
 
 /** Digits-only 6-digit PIN */
@@ -93,20 +94,6 @@ export function validateCheckoutForm(form, payment, paymentIds = []) {
     next.payment = 'Select a payment method'
   }
   return next
-}
-
-/** Contact + address ready (payment checked separately) */
-export function isCheckoutDetailsReady(form) {
-  const errors = validateCheckoutForm(form, 'cod', ['cod'])
-  return !(
-    errors.name ||
-    errors.email ||
-    errors.phone ||
-    errors.address ||
-    errors.city ||
-    errors.state ||
-    errors.pincode
-  )
 }
 
 export function firstCheckoutErrorField(errors) {

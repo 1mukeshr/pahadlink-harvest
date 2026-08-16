@@ -161,3 +161,44 @@ export function restoreStock(items) {
   writeStore(store)
   return { ok: true }
 }
+
+/**
+ * Admin: set absolute stock for a product (plain stock or one size).
+ * payload: { stock?: number } or { size: string, stock: number }
+ */
+export function setProductStock(productId, { stock, size } = {}) {
+  const id = String(productId || '').trim()
+  if (!id || !isCatalogProduct(id)) {
+    return { ok: false, message: 'Unknown product' }
+  }
+  const qty = Math.max(0, Math.floor(Number(stock)))
+  if (!Number.isFinite(qty)) {
+    return { ok: false, message: 'Stock must be a number' }
+  }
+
+  const store = readStore()
+  const entry = store[id] || structuredClone(DEFAULTS[id] || { stock: 0 })
+
+  const sizeKey = size ? String(size) : ''
+  if (sizeKey) {
+    if (!entry.stockBySize || typeof entry.stockBySize !== 'object') {
+      entry.stockBySize = {}
+    }
+    entry.stockBySize[sizeKey] = qty
+    delete entry.stock
+  } else if (entry.stockBySize && typeof entry.stockBySize === 'object') {
+    return {
+      ok: false,
+      message: 'This product uses sizes — update a size, not plain stock',
+    }
+  } else {
+    entry.stock = qty
+  }
+
+  store[id] = entry
+  writeStore(store)
+  return {
+    ok: true,
+    item: getInventorySnapshot().find((x) => x.productId === id),
+  }
+}

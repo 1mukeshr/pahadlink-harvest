@@ -12,9 +12,9 @@ import {
   TruckIcon,
 } from '../components/icons'
 import { ROUTES } from '../config'
-import heroImage from '../assets/images/banners/offer-mix-products.png'
-import storyImage from '../assets/images/banners/offer-tea-honey.png'
-import rangeImage from '../assets/images/banners/category-organic-food.png'
+import heroImage from '../assets/images/banners/offer-mix-products.webp'
+import storyImage from '../assets/images/banners/offer-honey-buransh.webp'
+import rangeImage from '../assets/images/categories/category-organic-food.webp'
 
 const PROMISES = [
   {
@@ -63,7 +63,7 @@ const MILESTONES = [
 
 const RANGE = [
   'Pahadi rajma, gahat dal, mandua & jhangora',
-  'Raw forest honey and herbal hill teas',
+  'Raw forest honey and buransh squash',
   'Bal mithai and festival sweets',
   'Ringaal crafts, pahadi topi, pichodi and gift hampers',
 ]
@@ -138,12 +138,12 @@ const About = () => {
             <figure className="about-story__figure">
               <img
                 src={storyImage}
-                alt="Pahadi tea and honey from the hills"
+                alt="Pahadi honey and buransh squash from the hills"
                 loading="lazy"
               />
               <figcaption>
                 <HillsIcon size={16} />
-                Tea, honey, and kitchen staples sourced from Uttarakhand makers
+                Honey, buransh, and kitchen staples sourced from Uttarakhand makers
               </figcaption>
             </figure>
           </div>

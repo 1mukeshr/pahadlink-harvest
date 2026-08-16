@@ -23,6 +23,7 @@ import {
   restoreStock,
   getInventorySnapshot,
   getStock,
+  setProductStock,
 } from '../services/inventory.js'
 import { priceOrderItems } from '../services/catalog.js'
 import { MAX_QTY_PER_ITEM_PER_CUSTOMER } from '../config/constants.js'
@@ -39,7 +40,6 @@ const SELLER_STATUSES = [
   'shipped',
   'out_for_delivery',
   'delivered',
-  'return_requested',
 ]
 
 function requireMongo(_req, res, next) {
@@ -184,7 +184,6 @@ router.get('/stats', requireMongo, protect, authorize('admin', 'seller'), async 
       outForDelivery,
       delivered,
       cancelled,
-      returns,
       revenue,
     ] = await Promise.all([
       Order.countDocuments(base),
@@ -195,10 +194,6 @@ router.get('/stats', requireMongo, protect, authorize('admin', 'seller'), async 
       Order.countDocuments({ ...base, status: 'out_for_delivery' }),
       Order.countDocuments({ ...base, status: 'delivered' }),
       Order.countDocuments({ ...base, status: 'cancelled' }),
-      Order.countDocuments({
-        ...base,
-        status: { $in: ['return_requested', 'returned'] },
-      }),
       Order.aggregate([
         { $match: { paymentStatus: 'paid', ...base } },
         { $group: { _id: null, total: { $sum: '$totalAmount' } } },
@@ -216,7 +211,6 @@ router.get('/stats', requireMongo, protect, authorize('admin', 'seller'), async 
       out_for_delivery: outForDelivery,
       delivered,
       cancelled,
-      returns,
       revenue: revenue[0]?.total || 0,
       period,
       from: from.toISOString(),
@@ -242,6 +236,22 @@ router.get('/inventory', protect, authorize('admin'), (_req, res) => {
     res.json({ items: getInventorySnapshot() })
   } catch (error) {
     res.status(500).json({ message: error.message || 'Failed to load inventory' })
+  }
+})
+
+/** Admin: set stock for a product (or one size) */
+router.put('/inventory/:productId', protect, authorize('admin'), (req, res) => {
+  try {
+    const productId = String(req.params.productId || '').trim()
+    const stock = req.body?.stock
+    const size = req.body?.size ? String(req.body.size).trim() : ''
+    const result = setProductStock(productId, { stock, size: size || undefined })
+    if (!result.ok) {
+      return res.status(400).json({ message: result.message || 'Could not update stock' })
+    }
+    res.json({ item: result.item, items: getInventorySnapshot() })
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Failed to update inventory' })
   }
 })
 
@@ -272,9 +282,10 @@ router.post('/', requireMongo, protect, async (req, res) => {
     const pincode = String(addr.pincode || '')
       .replace(/\D/g, '')
       .slice(0, 6)
-    const phone = String(customerPhone || '')
-      .replace(/\D/g, '')
-      .slice(0, 10)
+    let phone = String(customerPhone || '').replace(/\D/g, '')
+    if (phone.startsWith('91') && phone.length >= 12) phone = phone.slice(2)
+    else if (phone.startsWith('0') && phone.length === 11) phone = phone.slice(1)
+    phone = phone.slice(0, 10)
     const emailRaw = String(customerEmail || '').trim().toLowerCase()
     if (!String(customerName || '').trim() || !emailRaw || !Array.isArray(items) || !items.length) {
       return res.status(400).json({
@@ -466,38 +477,7 @@ router.post('/', requireMongo, protect, async (req, res) => {
   }
 })
 
-/** Customer: request return on delivered order */
-router.post('/:id/return', requireMongo, protect, async (req, res) => {
-  try {
-    const order = await Order.findById(req.params.id)
-    if (!order) return res.status(404).json({ message: 'Order not found' })
-
-    const userId = String(req.user._id || req.user.id)
-    const email = String(req.user.email || '').toLowerCase()
-    const owns =
-      String(order.user || '') === userId ||
-      order.customerEmail === email
-    if (!owns && req.user.role !== 'admin') {
-      return res.status(403).json({ message: 'Not your order' })
-    }
-
-    if (order.status !== 'delivered') {
-      return res.status(400).json({ message: 'Only delivered orders can be returned' })
-    }
-
-    const reason = String(req.body.reason || '').trim()
-    order.status = 'return_requested'
-    order.returnReason = reason
-    pushTimeline(order, 'return_requested', reason || 'Return requested', email)
-    await order.save()
-
-    res.json({ message: 'Return requested', order: order.toSafeJSON() })
-  } catch (error) {
-    res.status(500).json({ message: error.message || 'Failed to request return' })
-  }
-})
-
-/** Customer: leave review on delivered/returned order */
+/** Customer: leave review on delivered order */
 router.post('/:id/review', requireMongo, protect, async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
@@ -512,7 +492,7 @@ router.post('/:id/review', requireMongo, protect, async (req, res) => {
       return res.status(403).json({ message: 'Not your order' })
     }
 
-    if (!['delivered', 'returned'].includes(order.status)) {
+    if (order.status !== 'delivered') {
       return res.status(400).json({ message: 'Review after delivery only' })
     }
 
@@ -571,6 +551,18 @@ router.patch('/:id', requireMongo, protect, authorize('admin', 'seller'), async 
         return res.status(400).json({ message: 'Invalid status' })
       }
 
+      // Cancel is only allowed before confirmation (pending → cancelled).
+      if (
+        status === 'cancelled' &&
+        order.status !== 'cancelled' &&
+        order.status !== 'pending'
+      ) {
+        return res.status(400).json({
+          message: 'Orders cannot be canceled after confirmation.',
+          allowed: STATUS_TRANSITIONS[order.status] || [],
+        })
+      }
+
       if (role === 'seller') {
         const sellerAllowed = [
           'confirmed',
@@ -578,12 +570,11 @@ router.patch('/:id', requireMongo, protect, authorize('admin', 'seller'), async 
           'shipped',
           'out_for_delivery',
           'delivered',
-          'returned',
         ]
         if (!sellerAllowed.includes(status)) {
           return res.status(403).json({
             message:
-              'Sellers can set confirmed, processing, shipped, out for delivery, delivered, or returned',
+              'Sellers can set confirmed, processing, shipped, out for delivery, or delivered',
           })
         }
         if (!canTransition(order.status, status) && order.status !== status) {
@@ -594,8 +585,7 @@ router.patch('/:id', requireMongo, protect, authorize('admin', 'seller'), async 
             (order.status === 'processing' && status === 'shipped') ||
             (order.status === 'shipped' &&
               ['out_for_delivery', 'delivered'].includes(status)) ||
-            (order.status === 'out_for_delivery' && status === 'delivered') ||
-            (order.status === 'return_requested' && status === 'returned')
+            (order.status === 'out_for_delivery' && status === 'delivered')
           if (!sellerJump) {
             return res.status(400).json({
               message: `Cannot move from ${order.status} to ${status}`,
@@ -604,7 +594,10 @@ router.patch('/:id', requireMongo, protect, authorize('admin', 'seller'), async 
           }
         }
       } else if (status !== order.status && !canTransition(order.status, status)) {
-        // Admin can force any status for ops flexibility
+        return res.status(400).json({
+          message: `Cannot move from ${order.status} to ${status}`,
+          allowed: STATUS_TRANSITIONS[order.status] || [],
+        })
       }
 
       if (status === 'confirmed' || status === 'processing') {
@@ -620,14 +613,6 @@ router.patch('/:id', requireMongo, protect, authorize('admin', 'seller'), async 
       if (status === 'cancelled' && order.stockDeducted && prevStatus !== 'cancelled') {
         restoreStock(order.items)
         order.stockDeducted = false
-      }
-
-      if (status === 'returned' && order.stockDeducted) {
-        restoreStock(order.items)
-        order.stockDeducted = false
-        if (order.paymentStatus === 'paid') {
-          order.paymentStatus = 'refunded'
-        }
       }
 
       order.status = status

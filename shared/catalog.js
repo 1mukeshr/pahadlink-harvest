@@ -11,11 +11,12 @@ export const PRODUCT_PRICING = [
   { id: 'gahat-dal', name: 'Gahat Dal | Horse Gram from Uttarakhand', price: 199, sizes: ['500g', '1 kg'] },
   { id: 'red-rice', name: 'Pahadi Red Rice | Naturally Aged', price: 299, sizes: ['1 kg', '2 kg', '5 kg'] },
   { id: 'bal-mithai', name: 'Bal Mithai | Classic Almora Sweet', price: 399, sizes: ['250g', '500g'] },
-  { id: 'herbal-tea', name: 'Himalayan Herbal Tea | Mountain Blend', price: 229, sizes: ['100g', '250g'] },
+  { id: 'singori', name: 'Singori | Malu Leaf Khoya Sweet', price: 349, sizes: ['250g', '500g'] },
   { id: 'buransh-squash', name: 'Buransh Squash | Rhododendron Drink Mix', price: 279, sizes: ['500ml', '1 L'] },
   { id: 'pahadi-topi', name: 'Pahadi Topi | Traditional Wool Cap', price: 449, sizes: ['Free size'] },
   { id: 'pahadi-pichodi', name: 'Pahadi Pichodi | Rangwali Ceremonial Wrap', price: 599, sizes: ['Free size'] },
   { id: 'ringaal-basket', name: 'Ringaal Bamboo Basket | Handcrafted', price: 599, sizes: ['Medium', 'Large'] },
+  { id: 'aipan-art', name: 'Aipan Art Plate | Traditional Kumaoni Folk Art', price: 749, sizes: ['Small', 'Medium'] },
   { id: 'jhangora', name: 'Jhangora | Barnyard Millet', price: 169, sizes: ['500g', '1 kg'] },
   { id: 'festival-hamper', name: 'Festival Hamper | Honey, Sweets & Grains', price: 1299, sizes: ['Standard', 'Premium'] },
   { id: 'organic-gift-box', name: 'Organic Gift Box | Clean Pahadi Essentials', price: 899, sizes: ['Box of 4', 'Box of 6'] },
@@ -23,7 +24,7 @@ export const PRODUCT_PRICING = [
 
 const byId = new Map(PRODUCT_PRICING.map((p) => [p.id, p]))
 
-export function toBaseUnits(amount, unit) {
+function toBaseUnits(amount, unit) {
   if (unit === 'kg' || unit === 'l') return amount * 1000
   return amount
 }
@@ -40,6 +41,7 @@ export function sizeWeight(size) {
   if (pcs) return Number(pcs[1])
   const named = {
     freesize: 1,
+    small: 0.75,
     medium: 1,
     large: 1.35,
     standard: 1,

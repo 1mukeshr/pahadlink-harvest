@@ -1,10 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ROUTES } from '../../config'
 
-/**
- * Simple breadcrumb trail.
- * items: [{ label, to? }] - last item is current page (no link).
- */
 const Breadcrumb = ({ items = [], className = '' }) => {
   if (!items.length) return null
 

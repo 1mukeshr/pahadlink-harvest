@@ -109,7 +109,7 @@ router.post('/register', async (req, res) => {
       }
     }
 
-    const user = await users.create({
+    await users.create({
       name,
       email,
       username: uniqueUsername,
@@ -214,19 +214,19 @@ router.post('/forgot-password', async (req, res) => {
         .map((s) => s.trim())
         .find(Boolean) || 'http://localhost:5173'
     let base = front.replace(/\/$/, '')
-    // GitHub Pages project site lives under /pahadlink
+    // GitHub Pages project site: https://1mukeshr.github.io/pahadlink-harvest/
     try {
       const u = new URL(base)
       if (
         /\.github\.io$/i.test(u.hostname) &&
         (u.pathname === '/' || u.pathname === '')
       ) {
-        base = `${u.origin}/pahadlink`
+        base = `${u.origin}/pahadlink-harvest`
       }
     } catch {
       // keep base as-is
     }
-    const resetUrl = `${base}/#/reset-password?token=${encodeURIComponent(resetToken)}`
+    const resetUrl = `${base}/reset-password?token=${encodeURIComponent(resetToken)}`
 
     await sendMail({
       to: user.email,
@@ -400,6 +400,87 @@ router.post('/google', async (req, res) => {
 
 router.get('/me', protect, (req, res) => {
   res.json({ user: req.user.toSafeJSON() })
+})
+
+const MAX_CART_LINES = 40
+const MAX_WISHLIST = 60
+
+function sanitizeCart(raw) {
+  if (!Array.isArray(raw)) return []
+  const out = []
+  const seen = new Set()
+  for (const row of raw.slice(0, MAX_CART_LINES * 2)) {
+    const id = String(row?.id || '').trim()
+    const size = String(row?.size || '').trim()
+    const key = String(row?.key || `${id}::${size}`).trim()
+    if (!id || !key || seen.has(key)) continue
+    const qty = Math.min(99, Math.max(1, Number(row?.qty) || 1))
+    const price = Math.max(0, Number(row?.price) || 0)
+    seen.add(key)
+    out.push({
+      key,
+      id,
+      name: String(row?.name || '').trim().slice(0, 120),
+      image: String(row?.image || '').trim().slice(0, 500),
+      price,
+      size,
+      qty,
+    })
+    if (out.length >= MAX_CART_LINES) break
+  }
+  return out
+}
+
+function sanitizeWishlist(raw) {
+  if (!Array.isArray(raw)) return []
+  const out = []
+  const seen = new Set()
+  for (const row of raw.slice(0, MAX_WISHLIST * 2)) {
+    const id = String(row?.id || '').trim()
+    if (!id || seen.has(id)) continue
+    seen.add(id)
+    out.push({
+      id,
+      name: String(row?.name || '').trim().slice(0, 120),
+      image: String(row?.image || '').trim().slice(0, 500),
+      price: Math.max(0, Number(row?.price) || 0),
+    })
+    if (out.length >= MAX_WISHLIST) break
+  }
+  return out
+}
+
+/** GET /api/auth/bag — cart + wishlist for the signed-in account */
+router.get('/bag', protect, async (req, res) => {
+  try {
+    const user = await users.findById(req.user._id || req.user.id)
+    if (!user) return res.status(404).json({ message: 'User not found' })
+    return res.json({
+      cart: sanitizeCart(user.cart),
+      wishlist: sanitizeWishlist(user.wishlist),
+    })
+  } catch (error) {
+    return res.status(500).json({ message: error.message || 'Failed to load bag' })
+  }
+})
+
+/** PUT /api/auth/bag — replace account cart + wishlist (cross-device sync) */
+router.put('/bag', protect, async (req, res) => {
+  try {
+    const cart = sanitizeCart(req.body?.cart)
+    const wishlist = sanitizeWishlist(req.body?.wishlist)
+    const user = await users.findByIdAndUpdate(req.user._id || req.user.id, {
+      cart,
+      wishlist,
+    })
+    if (!user) return res.status(404).json({ message: 'User not found' })
+    return res.json({
+      cart: sanitizeCart(user.cart),
+      wishlist: sanitizeWishlist(user.wishlist),
+    })
+  } catch (error) {
+    return res.status(500).json({ message: error.message || 'Failed to save bag' })
+  }
 })
 
 router.patch('/users/:id/role', protect, authorize('admin'), async (req, res) => {

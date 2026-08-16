@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { createElement, useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Breadcrumb from '../../components/layout/Breadcrumb'
 import Footer from '../../components/layout/Footer'
@@ -16,7 +16,7 @@ import {
   DownloadIcon,
 } from '../../components/icons'
 import { downloadOrderInvoice } from '../../components/orders/OrderInvoice'
-import { ROUTES, ROLES } from '../../config'
+import { ROUTES } from '../../config'
 import { useAuth } from '../../context/AuthContext'
 import { resolveProductImage } from '../../data/siteData'
 import { getOrdersForUser, syncOrdersForUser } from '../../utils/ordersStorage'
@@ -42,15 +42,6 @@ const statusClass = (status) => {
 
 const statusText = (order) =>
   order?.statusLabel || STATUS_LABELS[order?.status] || order?.status || 'Order Placed'
-
-const initialsFrom = (name, email) => {
-  const source = (name || email || 'P').trim()
-  const parts = source.split(/\s+/).filter(Boolean)
-  if (parts.length >= 2) {
-    return `${parts[0][0]}${parts[1][0]}`.toUpperCase()
-  }
-  return source.slice(0, 2).toUpperCase()
-}
 
 const formatPrice = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`
 
@@ -125,8 +116,7 @@ const itemsSubtotal = (items) =>
 
 
 export const AccountPage = () => {
-  const { user, logout, isAdmin, isSeller } = useAuth()
-  const initials = initialsFrom(user?.name, user?.email)
+  const { user, logout } = useAuth()
 
   return (
     <>
@@ -140,26 +130,10 @@ export const AccountPage = () => {
         <section className="account-shell">
           <div className="container account-shell__inner">
             <div className="account-card">
-              <div className="account-card__hero">
-                <span className="account-card__avatar" aria-hidden="true">
-                  {initials}
-                </span>
-                <p className="account-card__kicker">
-                  {isAdmin || isSeller ? 'Staff account' : 'Welcome back'}
-                </p>
+              <div className="account-card__hero">               
+               
                 <h1>{user?.name || 'My account'}</h1>
-                <p className="account-card__lead">
-                  {isAdmin
-                    ? 'Manage orders, inventory, and fulfilment from the admin desk.'
-                    : isSeller
-                      ? 'Process and ship orders from the seller desk.'
-                      : 'Your PahadLink profile and shopping details in one place.'}
-                </p>
-                {user?.role && user.role !== ROLES.CUSTOMER && (
-                  <p className="account-card__role">
-                    Role: {user.role === 'admin' ? 'Admin' : 'Seller'}
-                  </p>
-                )}
+               
               </div>
 
               <ul className="account-card__list">
@@ -187,72 +161,32 @@ export const AccountPage = () => {
               </ul>
 
               <div className="account-card__quick">
-                {isAdmin && (
-                  <Link to={ROUTES.ADMIN} className="account-card__quick-link">
-                    <span className="account-card__quick-icon" aria-hidden="true">
-                      <PackageIcon size={16} />
-                    </span>
-                    <span className="account-card__quick-copy">
-                      <strong>Admin panel</strong>
-                      <em>Orders & inventory</em>
-                    </span>
-                    <ArrowRightIcon size={14} className="account-card__quick-chevron" />
-                  </Link>
-                )}
-                {(isSeller || isAdmin) && (
-                  <Link to={ROUTES.SELLER} className="account-card__quick-link">
-                    <span className="account-card__quick-icon" aria-hidden="true">
-                      <TruckIcon size={16} />
-                    </span>
-                    <span className="account-card__quick-copy">
-                      <strong>
-                        {isAdmin ? 'Fulfilment desk' : 'Seller desk'}
-                      </strong>
-                      <em>Process & ship</em>
-                    </span>
-                    <ArrowRightIcon size={14} className="account-card__quick-chevron" />
-                  </Link>
-                )}
-                {!isAdmin && !isSeller && (
-                  <>
-                    <Link to={ROUTES.ORDERS} className="account-card__quick-link">
-                      <span className="account-card__quick-icon" aria-hidden="true">
-                        <PackageIcon size={16} />
-                      </span>
-                      <span className="account-card__quick-copy">
-                        <strong>My orders</strong>
-                        <em>Track deliveries</em>
-                      </span>
-                      <ArrowRightIcon size={14} className="account-card__quick-chevron" />
-                    </Link>
-                    <Link to={ROUTES.SHOP} className="account-card__quick-link">
-                      <span className="account-card__quick-icon" aria-hidden="true">
-                        <TruckIcon size={16} />
-                      </span>
-                      <span className="account-card__quick-copy">
-                        <strong>Shop</strong>
-                        <em>Browse products</em>
-                      </span>
-                      <ArrowRightIcon size={14} className="account-card__quick-chevron" />
-                    </Link>
-                  </>
-                )}
+                <Link to={ROUTES.ORDERS} className="account-card__quick-link">
+                  <span className="account-card__quick-icon" aria-hidden="true">
+                    <PackageIcon size={16} />
+                  </span>
+                  <span className="account-card__quick-copy">
+                    <strong>My orders</strong>
+                    <em>Track deliveries</em>
+                  </span>
+                  <ArrowRightIcon size={14} className="account-card__quick-chevron" />
+                </Link>
+                <Link to={ROUTES.SHOP} className="account-card__quick-link">
+                  <span className="account-card__quick-icon" aria-hidden="true">
+                    <TruckIcon size={16} />
+                  </span>
+                  <span className="account-card__quick-copy">
+                    <strong>Shop</strong>
+                    <em>Browse products</em>
+                  </span>
+                  <ArrowRightIcon size={14} className="account-card__quick-chevron" />
+                </Link>
               </div>
 
               <div className="account-card__actions">
-                {isAdmin ? (
-                  <Link to={ROUTES.ADMIN} className="btn-hero-primary">
-                    Open admin panel
-                  </Link>
-                ) : isSeller ? (
-                  <Link to={ROUTES.SELLER} className="btn-hero-primary">
-                    Open seller desk
-                  </Link>
-                ) : (
-                  <Link to={ROUTES.ORDERS} className="btn-hero-primary">
-                    View my orders
-                  </Link>
-                )}
+                <Link to={ROUTES.ORDERS} className="btn-hero-primary">
+                  View my orders
+                </Link>
                 <button
                   type="button"
                   className="account-card__logout"
@@ -279,7 +213,6 @@ export const OrdersPage = () => {
   const [activeOrderId, setActiveOrderId] = useState(null)
   const [showAllItems, setShowAllItems] = useState(false)
   const [invoiceDownloading, setInvoiceDownloading] = useState(false)
-  const [syncedAt, setSyncedAt] = useState(null)
 
   const loadOrders = useCallback(async ({ silent = false } = {}) => {
     if (!silent) setLoading(true)
@@ -288,7 +221,6 @@ export const OrdersPage = () => {
       const apiOrders = await fetchMyOrders()
       setOrders(apiOrders)
       syncOrdersForUser(user, apiOrders)
-      setSyncedAt(new Date())
     } catch (err) {
       const cached = getOrdersForUser(user)
       if (cached.length) {
@@ -362,7 +294,6 @@ export const OrdersPage = () => {
   )
   const visibleItems = showAllItems ? activeItems : activeItems.slice(0, 2)
   const hiddenItemCount = Math.max(0, activeItems.length - 2)
-  const ActivePayIcon = paymentIcon(activeOrder?.payment)
   const activePayTone = paymentTone(activeOrder)
 
   const openOrderPopup = (orderId) => {
@@ -394,22 +325,6 @@ export const OrdersPage = () => {
             <header className="orders-head">
               <div className="orders-head__copy">
                 <h1 id="orders-title">My orders</h1>
-                <p>
-                  {loading
-                    ? 'Syncing your orders…'
-                    : orders.length === 0
-                      ? 'Track deliveries and revisit past hill finds here.'
-                      : `${orders.length} order${orders.length === 1 ? '' : 's'} · live PahadLink delivery status`}
-                </p>
-                {syncedAt && !loading && (
-                  <p className="orders-head__sync">
-                    Updated{' '}
-                    {syncedAt.toLocaleTimeString('en-IN', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                    })}
-                  </p>
-                )}
               </div>
               <div className="orders-head__actions">
                 <Link to={ROUTES.SHOP} className="orders-head__shop">
@@ -777,7 +692,7 @@ export const OrdersPage = () => {
                     className="orders-detail-popup__pay-icon"
                     aria-hidden="true"
                   >
-                    <ActivePayIcon size={22} />
+                    {createElement(paymentIcon(activeOrder?.payment), { size: 22 })}
                   </span>
                   <div className="orders-detail-popup__pay-copy">
                     <span>Payment</span>

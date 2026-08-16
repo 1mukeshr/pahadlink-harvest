@@ -1,30 +1,41 @@
-import defaultProductImage from '../assets/images/default-product.png'
-import bannerHoney from '../assets/images/banners/banner-honey.png'
-import bannerRajma from '../assets/images/banners/banner-rajma.png'
-import bannerTea from '../assets/images/banners/banner-tea.png'
-import offerMixProducts from '../assets/images/banners/offer-mix-products.png'
-import offerFreeShip from '../assets/images/banners/offer-free-ship.png'
-import offerTeaHoney from '../assets/images/banners/offer-tea-honey.png'
-import categoryBannerOrganic from '../assets/images/banners/category-organic-food.png'
-import categoryBannerHoney from '../assets/images/banners/category-honey-natural.png'
-import categoryBannerClothing from '../assets/images/banners/category-clothing.png'
-import categoryBannerHandicrafts from '../assets/images/banners/category-handicrafts.png'
-import categoryBannerSweets from '../assets/images/banners/category-snacks-sweets.png'
-import categoryBannerGifts from '../assets/images/banners/category-gift-hampers.png'
-import packPahadiRajma from '../assets/images/products/pack-pahadi-rajma.png'
-import packRawHoney from '../assets/images/products/pack-raw-honey.png'
-import packManduaFlour from '../assets/images/products/pack-mandua-flour.png'
-import packGahatDal from '../assets/images/products/pack-gahat-dal.png'
-import packRedRice from '../assets/images/products/pack-red-rice.png'
-import packBalMithai from '../assets/images/products/pack-bal-mithai.png'
-import packHerbalTea from '../assets/images/products/pack-herbal-tea.png'
-import packBuranshSquash from '../assets/images/products/pack-buransh-squash.png'
-import packPahadiTopi from '../assets/images/products/pack-pahadi-topi.png'
-import packPahadiPichodi from '../assets/images/products/pack-pahadi-pichodi.png'
-import packRingaalBasket from '../assets/images/products/pack-ringaal-basket.png'
-import packJhangora from '../assets/images/products/pack-jhangora.png'
-import packFestivalHamper from '../assets/images/products/pack-festival-hamper.png'
-import packOrganicGiftBox from '../assets/images/products/pack-organic-gift-box.png'
+/** Home hero banners — dedicated 1000x500 art (`home-banner/`) */
+import homeBannerHoney from '../assets/images/home-banner/honey-forest.webp'
+import homeBannerOrganic from '../assets/images/home-banner/organic-harvest.webp'
+import homeBannerSweets from '../assets/images/home-banner/festive-sweets.webp'
+/** Offer banners — `banners/` (new webp only) */
+import offerMixProducts from '../assets/images/banners/offer-mix-products.webp'
+import offerFreeShip from '../assets/images/banners/offer-free-ship.webp'
+import offerHoneyBuransh from '../assets/images/banners/offer-honey-buransh.webp'
+/** Category hero images — `categories/` (new webp only) */
+import categoryBannerOrganic from '../assets/images/categories/category-organic-food.webp'
+import categoryBannerHoney from '../assets/images/categories/category-honey-natural.webp'
+import categoryBannerClothing from '../assets/images/categories/category-clothing.webp'
+import categoryBannerHandicrafts from '../assets/images/categories/category-handicrafts.webp'
+import categoryBannerSweets from '../assets/images/categories/category-snacks-sweets.webp'
+import categoryBannerGifts from '../assets/images/categories/category-gift-hampers.webp'
+/** Category page banners — composed 16:3 strips (`scripts/build-category-banners.mjs`) */
+import bannerOrganic from '../assets/images/categories/banners/organic-food.webp'
+import bannerHoney from '../assets/images/categories/banners/honey-natural.webp'
+import bannerClothing from '../assets/images/categories/banners/clothing.webp'
+import bannerHandicrafts from '../assets/images/categories/banners/handicrafts.webp'
+import bannerSweets from '../assets/images/categories/banners/snacks-sweets.webp'
+import bannerGifts from '../assets/images/categories/banners/gift-hampers.webp'
+/** Product pack images — `products/` (new webp only) */
+import packPahadiRajma from '../assets/images/products/pack-pahadi-rajma.webp'
+import packRawHoney from '../assets/images/products/pack-raw-honey.webp'
+import packManduaFlour from '../assets/images/products/pack-mandua-flour.webp'
+import packGahatDal from '../assets/images/products/pack-gahat-dal.webp'
+import packRedRice from '../assets/images/products/pack-red-rice.webp'
+import packBalMithai from '../assets/images/products/pack-bal-mithai.webp'
+import packSingori from '../assets/images/products/pack-singori.webp'
+import packBuranshSquash from '../assets/images/products/pack-buransh-squash.webp'
+import packPahadiTopi from '../assets/images/products/pack-pahadi-topi.webp'
+import packPahadiPichodi from '../assets/images/products/pack-pahadi-pichodi.webp'
+import packRingaalBasket from '../assets/images/products/pack-ringaal-basket.webp'
+import packAipanArt from '../assets/images/products/pack-aipan-art.webp'
+import packJhangora from '../assets/images/products/pack-jhangora.webp'
+import packFestivalHamper from '../assets/images/products/pack-festival-hamper.webp'
+import packOrganicGiftBox from '../assets/images/products/pack-organic-gift-box.webp'
 import { capitalizeWords } from '../utils/text'
 import {
   PRODUCT_PRICING,
@@ -33,30 +44,28 @@ import {
 } from '@pahadlink/shared/catalog'
 import { STOCK_DEFAULTS } from '@pahadlink/shared/inventoryDefaults'
 
-export const DEFAULT_PRODUCT_IMAGE = defaultProductImage
-
-/** Product promo banners used on home hero */
+/** Home hero slides — 2:1 art with the subject right, copy space left */
 export const productBanners = [
   {
     id: 'raw-honey',
     alt: 'Raw forest honey from the Himalayas',
     title: 'Raw forest honey',
     text: 'Pure, unprocessed honey from Himalayan apiaries.',
-    image: bannerHoney,
+    image: homeBannerHoney,
   },
   {
     id: 'pahadi-rajma',
     alt: 'Pahadi rajma - kidney beans from the hills',
     title: 'Pahadi rajma',
     text: 'Hill-grown kidney beans with deep, earthy flavour.',
-    image: bannerRajma,
+    image: homeBannerOrganic,
   },
   {
-    id: 'herbal-tea',
-    alt: 'Himalayan herbal tea mountain blend',
-    title: 'Herbal mountain tea',
-    text: 'Soothing blends picked from the high hills.',
-    image: bannerTea,
+    id: 'bal-mithai',
+    alt: 'Almora bal mithai and traditional pahadi sweets',
+    title: 'Almora bal mithai',
+    text: 'Classic hill sweets made the traditional way.',
+    image: homeBannerSweets,
   },
 ]
 
@@ -83,94 +92,112 @@ export const homeOffers = [
     image: offerFreeShip,
   },
   {
-    id: 'tea-honey',
+    id: 'honey-buransh',
     eyebrow: 'Kitchen picks',
-    title: 'Tea & raw honey favourites',
-    text: 'Comfort blends and pure forest honey.',
+    title: 'Honey & buransh favourites',
+    text: 'Pure forest honey and rhododendron squash.',
     cta: 'Explore now',
     href: '/shop?tag=trending',
-    image: offerTeaHoney,
+    image: offerHoneyBuransh,
   },
 ]
 
+/**
+ * Category landing copy — edit `eyebrow` / `name` / `headline` / `blurb` here.
+ * Banner images stay product-only; text is HTML overlay on the category page.
+ */
 export const categoryGroups = [
   {
     id: 'organic-food',
     name: 'Organic Foods',
+    eyebrow: 'Pahadlink · Organic',
     headline: 'Hill staples for everyday cooking',
-    blurb: 'Rajma, dals, millets, and rice from Himalayan farms - clean, honest, and packed for your kitchen.',
-    banner: categoryBannerOrganic,
+    blurb: 'Rajma, dals, millets, and rice from Himalayan farms — clean, honest, and packed for your kitchen.',
+    banner: bannerOrganic,
+    cover: categoryBannerOrganic,
     items: [
-      { name: 'Mandua', icon: 'grain' },
-      { name: 'Jhangora', icon: 'grain' },
-      { name: 'Pahadi Rajma', icon: 'dal' },
-      { name: 'Gahat Dal', icon: 'dal' },
-      { name: 'Bhatt Dal', icon: 'dal' },
-      { name: 'Red Rice', icon: 'rice' },
+      { name: 'Mandua' },
+      { name: 'Jhangora' },
+      { name: 'Pahadi Rajma' },
+      { name: 'Gahat Dal' },
+      { name: 'Bhatt Dal' },
+      { name: 'Red Rice' },
     ],
   },
   {
     id: 'honey-natural',
     name: 'Natural Products',
+    eyebrow: 'Pahadlink · Natural',
     headline: 'From forest to your table',
-    blurb: 'Raw honey, herbal teas, and natural pantry picks gathered with care from the hills.',
-    banner: categoryBannerHoney,
+    blurb: 'Raw honey, buransh squash, and natural pantry picks gathered with care from the hills.',
+    banner: bannerHoney,
+    cover: categoryBannerHoney,
     items: [
-      { name: 'Raw Honey', icon: 'honey' },
-      { name: 'Herbal Tea', icon: 'tea' },
-      { name: 'Jams', icon: 'jar' },
-      { name: 'Pickles', icon: 'jar' },
-      { name: 'Spices', icon: 'spice' },
+      { name: 'Raw Honey' },
+      { name: 'Buransh Squash' },
+      { name: 'Jams' },
+      { name: 'Pickles' },
+      { name: 'Spices' },
     ],
   },
   {
     id: 'clothing',
     name: 'Pahadi Clothing',
+    eyebrow: 'Pahadlink · Clothing',
     headline: 'Wear the craft of the hills',
     blurb: 'Pahadi topi, pichodi, handwoven fabrics, and warm pieces made with traditional skill.',
-    banner: categoryBannerClothing,
+    banner: bannerClothing,
+    cover: categoryBannerClothing,
     items: [
-      { name: 'Pahadi Topi', icon: 'hat' },
-      { name: 'Pahadi Pichodi', icon: 'shawl' },
-      { name: 'Woolen Shawls', icon: 'shawl' },
-      { name: 'Traditional Wear', icon: 'dress' },
-      { name: 'Handwoven Fabric', icon: 'fabric' },
+      { name: 'Pahadi Topi' },
+      { name: 'Pahadi Pichodi' },
+      { name: 'Woolen Shawls' },
+      { name: 'Traditional Wear' },
+      { name: 'Handwoven Fabric' },
     ],
   },
   {
     id: 'handicrafts',
     name: 'Handicrafts & Home Decor',
+    eyebrow: 'Pahadlink · Handmade',
     headline: 'Handmade by hill artisans',
-    blurb: 'Bamboo, wood, and copper craft that brings pahadi making into your home.',
-    banner: categoryBannerHandicrafts,
+    blurb: 'Bamboo, wood, copper craft, and Aipan art that brings pahadi making into your home.',
+    banner: bannerHandicrafts,
+    cover: categoryBannerHandicrafts,
     items: [
-      { name: 'Wooden Crafts', icon: 'wood' },
-      { name: 'Ringaal Bamboo', icon: 'bamboo' },
-      { name: 'Copper Ware', icon: 'copper' },
-      { name: 'Handmade Gifts', icon: 'handmade' },
+      { name: 'Wooden Crafts' },
+      { name: 'Ringaal Bamboo' },
+      { name: 'Copper Ware' },
+      { name: 'Aipan Art' },
+      { name: 'Handmade Gifts' },
     ],
   },
   {
     id: 'snacks-sweets',
     name: 'Traditional Sweets',
+    eyebrow: 'Pahadlink · Sweets',
     headline: 'Taste of home, made traditional',
-    blurb: 'Bal mithai and classic hill sweets prepared the way you remember.',
-    banner: categoryBannerSweets,
+    blurb: 'Bal mithai, singori, and classic hill sweets prepared the way you remember.',
+    banner: bannerSweets,
+    cover: categoryBannerSweets,
     items: [
-      { name: 'Bal Mithai', icon: 'sweet' },
-      { name: 'Rus', icon: 'snack' },
-      { name: 'Pahadi Snacks', icon: 'snack' },
+      { name: 'Bal Mithai' },
+      { name: 'Singori' },
+      { name: 'Rus' },
+      { name: 'Pahadi Snacks' },
     ],
   },
   {
     id: 'gift-hampers',
     name: 'Gifts & Souvenirs',
+    eyebrow: 'Pahadlink · Gifting',
     headline: 'Share pahadi taste with love',
     blurb: 'Festival hampers and organic gift boxes ready to send warmth from the hills.',
-    banner: categoryBannerGifts,
+    banner: bannerGifts,
+    cover: categoryBannerGifts,
     items: [
-      { name: 'Festival Hampers', icon: 'gift' },
-      { name: 'Organic Gift Boxes', icon: 'gift' },
+      { name: 'Festival Hampers' },
+      { name: 'Organic Gift Boxes' },
     ],
   },
 ]
@@ -178,19 +205,16 @@ export const categoryGroups = [
 export const features = [
   {
     title: 'Direct from the Hills',
-    icon: 'mountain',
     desc: 'We work with pahadi farmers and artisans - not middlemen - so you get real mountain products at fair prices.',
     points: ['Village-sourced goods', 'Fair pay for makers', 'Authentic hill recipes'],
   },
   {
     title: 'Pure, Not Processed',
-    icon: 'leaf',
     desc: 'No bulk blending, no artificial fillers. What you order is what grows and is made in the mountains.',
     points: ['No preservatives', 'Farm-fresh batches', 'Clean ingredient labels'],
   },
   {
     title: 'Trusted Every Order',
-    icon: 'shield',
     desc: 'Checked, packed with care, and delivered safely - so quality stays the same from first order to repeat.',
     points: ['Quality checks', 'Secure packaging', 'Reliable delivery'],
   },
@@ -270,13 +294,28 @@ const PRODUCT_PRESENTATION = {
     categoryId: 'snacks-sweets',
     subcategory: 'Bal Mithai',
   },
-  'herbal-tea': {
-    image: packHerbalTea,
-    compareAt: 349,
-    rating: 4.7,
+  singori: {
+    image: packSingori,
+    compareAt: 469,
+    rating: 4.8,
     tags: ['trending', 'handpicked'],
-    categoryId: 'honey-natural',
-    subcategory: 'Herbal Tea',
+    categoryId: 'snacks-sweets',
+    subcategory: 'Singori',
+    description:
+      'Singori from Almora — soft khoya sweetened with sugar and cardamom, hand-rolled into a cone and wrapped in a fresh malu leaf. The leaf gives it the faint woody aroma that makes this Kumaoni sweet unmistakable.',
+    highlights: [
+      'Traditional Kumaoni khoya sweet from Almora',
+      'Hand-wrapped in fresh malu (maalu) leaf',
+      'Cardamom flavoured, no artificial colours',
+      'Best enjoyed fresh within a few days',
+    ],
+    details: [
+      { label: 'Category', value: 'Traditional Sweets' },
+      { label: 'Type', value: 'Singori / Khoya sweet' },
+      { label: 'Flavour', value: 'Khoya with green cardamom' },
+      { label: 'Origin', value: 'Almora, Uttarakhand' },
+      { label: 'Shelf life', value: 'Best within 4 days' },
+    ],
   },
   'buransh-squash': {
     image: packBuranshSquash,
@@ -302,10 +341,10 @@ const PRODUCT_PRESENTATION = {
     categoryId: 'clothing',
     subcategory: 'Pahadi Pichodi',
     description:
-      'Authentic Rangwali Pahadi Pichodi (Pichoda) from Kumaon — saffron-orange cloth with deep red print, central shankha motif, floral block work, and gold sequin / gota border. A ceremonial wrap for weddings and festivals, finished by hill artisans.',
+      'Authentic Rangwali Pahadi Pichodi (Pichoda) from Kumaon — saffron-orange cloth with deep red floral and honeycomb print, traditional ceremonial motifs, and an ornate gold gota border. A ceremonial wrap for weddings and festivals, finished by hill artisans.',
     highlights: [
       'Traditional Kumaoni Rangwali Pichodi',
-      'Saffron-orange body with red print & shankha motif',
+      'Saffron-orange body with dense red floral block print',
       'Gold sequin and gota border finish',
       'Ideal for weddings, festivals, and gifting',
     ],
@@ -324,6 +363,27 @@ const PRODUCT_PRESENTATION = {
     tags: ['handpicked'],
     categoryId: 'handicrafts',
     subcategory: 'Ringaal Bamboo',
+  },
+  'aipan-art': {
+    image: packAipanArt,
+    compareAt: 999,
+    rating: 4.8,
+    tags: ['handpicked', 'trending'],
+    categoryId: 'handicrafts',
+    subcategory: 'Aipan Art',
+    highlights: [
+      'Handpainted Kumaoni Aipan folk motifs',
+      'Traditional red-and-white geometric patterns',
+      'Ready to hang or display as home decor',
+      'Crafted by hill artisans of Uttarakhand',
+    ],
+    details: [
+      { label: 'Category', value: 'Handicrafts & Home Decor' },
+      { label: 'Type', value: 'Aipan Art Plate' },
+      { label: 'Style', value: 'Traditional Kumaoni folk art' },
+      { label: 'Origin', value: 'Kumaon, Uttarakhand' },
+      { label: 'Finish', value: 'Handpainted wood' },
+    ],
   },
   jhangora: {
     image: packJhangora,
@@ -378,10 +438,6 @@ export function setLiveStockOverlay(items) {
     }
   }
   liveStockById = map
-}
-
-export function clearLiveStockOverlay() {
-  liveStockById = null
 }
 
 export const products = productCatalog.map((product) => {
@@ -577,47 +633,6 @@ export const scoreProductMatch = (product, query) => {
   return 0
 }
 
-export const searchProducts = (query, { limit = 8 } = {}) => {
-  const q = String(query || '').trim()
-  if (!q) return []
-
-  return products
-    .map((product) => ({ product, score: scoreProductMatch(product, q) }))
-    .filter((row) => row.score > 0)
-    .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name))
-    .slice(0, limit)
-    .map((row) => row.product)
-}
-
-export const searchCategories = (query, { limit = 4 } = {}) => {
-  const q = String(query || '').trim().toLowerCase()
-  if (!q) return []
-
-  return categoryGroups
-    .filter((group) => {
-      const name = group.name.toLowerCase()
-      const types = (group.types || []).map((t) => t.name.toLowerCase())
-      return name.includes(q) || types.some((t) => t.includes(q))
-    })
-    .slice(0, limit)
-}
-
-/** Popular picks shown when search is focused with an empty query. */
-export const getSearchSuggestions = ({ limit = 6 } = {}) => {
-  const popular = products.filter((p) => p.tags?.includes('bestseller'))
-  const trending = products.filter((p) => p.tags?.includes('trending'))
-  const merged = []
-  const seen = new Set()
-
-  ;[...popular, ...trending, ...products].forEach((p) => {
-    if (seen.has(p.id) || merged.length >= limit) return
-    seen.add(p.id)
-    merged.push(p)
-  })
-
-  return merged
-}
-
 export const getProductsByCategory = (categoryId, { subcategory } = {}) => {
   if (!categoryId) return []
 
@@ -632,7 +647,7 @@ export const getProductsByCategory = (categoryId, { subcategory } = {}) => {
   })
 }
 
-export const getCategoryProductCount = (categoryId) =>
+const getCategoryProductCount = (categoryId) =>
   getProductsByCategory(categoryId).length
 
 /** Single promo banner for a category landing hero */
@@ -640,20 +655,17 @@ export const getCategoryBanner = (categoryId) => {
   const category = getCategoryById(categoryId)
   if (!category) return null
 
-  const firstProduct = getProductsByCategory(categoryId)[0]
-  const image =
-    category.banner ||
-    firstProduct?.image ||
-    bannerRajma ||
-    bannerHoney ||
-    bannerTea
+  // Only 16:3 artwork here — square pack shots would be cropped to a sliver.
+  const image = category.banner || bannerOrganic
 
   return {
     id: category.id,
     image,
     alt: `${category.name} from the Himalayas`,
+    eyebrow: category.eyebrow || 'Pahadlink',
+    title: category.name,
     headline: category.headline || category.name,
-    blurb: category.blurb,
+    blurb: category.blurb || '',
   }
 }
 
@@ -665,7 +677,7 @@ export const getRelatedCategories = (categoryId, limit = 4) =>
     .map((group) => {
       const count = getCategoryProductCount(group.id)
       const cover =
-        group.banner || getProductsByCategory(group.id)[0]?.image || null
+        group.cover || getProductsByCategory(group.id)[0]?.image || null
       return {
         ...group,
         count,

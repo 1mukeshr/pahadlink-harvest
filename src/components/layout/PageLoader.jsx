@@ -1,8 +1,5 @@
 import logo from '../../assets/images/logo.png'
 
-/**
- * Route / Suspense loader - logo + progress bar, no fade-in flicker.
- */
 const PageLoader = ({ label = 'Loading PahadLink' }) => (
   <div className="page-loader" role="status" aria-live="polite" aria-busy="true">
     <div className="page-loader__brand" aria-hidden="true">

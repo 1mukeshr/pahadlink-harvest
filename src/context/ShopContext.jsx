@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { STORAGE, MAX_QTY_PER_ITEM_PER_CUSTOMER } from '../config'
@@ -16,6 +17,13 @@ import {
 } from '../data/siteData'
 import { capitalizeWords } from '../utils/text'
 import { fetchStockLevels } from '../services/orderService'
+import {
+  fetchBag,
+  mergeCarts,
+  mergeWishlists,
+  saveBag,
+} from '../services/bagService'
+import { useAuth } from './AuthContext'
 
 const ShopContext = createContext(null)
 
@@ -32,12 +40,34 @@ const readStore = (key, fallback) => {
 
 const withCapitalizedNames = (items) =>
   items.map((item) =>
-    item?.name
-      ? { ...item, name: capitalizeWords(item.name) }
-      : item
+    item?.name ? { ...item, name: capitalizeWords(item.name) } : item
   )
 
+function stripCartForSync(items = []) {
+  return items.map((item) => ({
+    key: item.key || `${item.id}::${item.size || ''}`,
+    id: item.id,
+    name: item.name || '',
+    image: item.image || '',
+    price: Number(item.price) || 0,
+    size: item.size || '',
+    qty: Math.max(1, Number(item.qty) || 1),
+  }))
+}
+
+function stripWishlistForSync(items = []) {
+  return items.map((item) => ({
+    id: item.id,
+    name: item.name || '',
+    image: item.image || '',
+    price: Number(item.price) || 0,
+  }))
+}
+
 export function ShopProvider({ children }) {
+  const { user, isAuthenticated, loading: authLoading } = useAuth()
+  const userId = user?.id || null
+
   const [cart, setCart] = useState(() =>
     withCapitalizedNames(readStore(STORAGE.CART, []))
   )
@@ -47,6 +77,21 @@ export function ShopProvider({ children }) {
   const [cartOpen, setCartOpen] = useState(false)
   const [wishlistOpen, setWishlistOpen] = useState(false)
   const [stockTick, setStockTick] = useState(0)
+
+  /** After login merge finishes (or guest mode), remote saves are allowed */
+  const hadSessionToken =
+    typeof window !== 'undefined' &&
+    Boolean(
+      localStorage.getItem(STORAGE.TOKEN) ||
+        sessionStorage.getItem(STORAGE.TOKEN)
+    )
+  const syncReadyRef = useRef(!hadSessionToken)
+  const skipNextRemoteSaveRef = useRef(false)
+  const prevUserIdRef = useRef(userId)
+  const cartRef = useRef(cart)
+  const wishlistRef = useRef(wishlist)
+  cartRef.current = cart
+  wishlistRef.current = wishlist
 
   useEffect(() => {
     let cancelled = false
@@ -94,13 +139,91 @@ export function ShopProvider({ children }) {
     })
   }, [stockTick])
 
+  // Login → pull account bag, merge guest local, push merged.
+  // Logout → clear local bag (account copy stays on server for next login).
+  useEffect(() => {
+    if (authLoading) return undefined
+
+    const prevId = prevUserIdRef.current
+    prevUserIdRef.current = userId
+
+    if (!isAuthenticated || !userId) {
+      syncReadyRef.current = true
+      if (prevId) {
+        skipNextRemoteSaveRef.current = true
+        setCart([])
+        setWishlist([])
+        localStorage.setItem(STORAGE.CART, '[]')
+        localStorage.setItem(STORAGE.WISHLIST, '[]')
+      }
+      return undefined
+    }
+
+    let cancelled = false
+    syncReadyRef.current = false
+    ;(async () => {
+      try {
+        const remote = await fetchBag()
+        if (cancelled) return
+        const localCart = cartRef.current.length
+          ? cartRef.current
+          : readStore(STORAGE.CART, [])
+        const localWish = wishlistRef.current.length
+          ? wishlistRef.current
+          : readStore(STORAGE.WISHLIST, [])
+        const mergedCart = withCapitalizedNames(
+          mergeCarts(localCart, remote.cart || [])
+        )
+        const mergedWish = withCapitalizedNames(
+          mergeWishlists(localWish, remote.wishlist || [])
+        )
+        skipNextRemoteSaveRef.current = true
+        setCart(mergedCart)
+        setWishlist(mergedWish)
+        localStorage.setItem(STORAGE.CART, JSON.stringify(mergedCart))
+        localStorage.setItem(STORAGE.WISHLIST, JSON.stringify(mergedWish))
+        await saveBag({
+          cart: stripCartForSync(mergedCart),
+          wishlist: stripWishlistForSync(mergedWish),
+        })
+      } catch {
+        // Keep local bag if sync is temporarily unavailable
+      } finally {
+        if (!cancelled) {
+          // Explicit save already pushed merge; allow the next user edit to sync.
+          skipNextRemoteSaveRef.current = false
+          syncReadyRef.current = true
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [userId, isAuthenticated, authLoading])
+
+  // Always mirror to localStorage; when signed in, debounce save to account.
   useEffect(() => {
     localStorage.setItem(STORAGE.CART, JSON.stringify(cart))
-  }, [cart])
-
-  useEffect(() => {
     localStorage.setItem(STORAGE.WISHLIST, JSON.stringify(wishlist))
-  }, [wishlist])
+
+    if (!isAuthenticated || !userId || !syncReadyRef.current) return undefined
+    if (skipNextRemoteSaveRef.current) {
+      skipNextRemoteSaveRef.current = false
+      return undefined
+    }
+
+    const timer = window.setTimeout(() => {
+      saveBag({
+        cart: stripCartForSync(cart),
+        wishlist: stripWishlistForSync(wishlist),
+      }).catch(() => {
+        // offline / API asleep — local cache still holds the bag
+      })
+    }, 450)
+
+    return () => window.clearTimeout(timer)
+  }, [cart, wishlist, isAuthenticated, userId])
 
   useEffect(() => {
     if (!cartOpen && !wishlistOpen) return undefined
@@ -127,12 +250,12 @@ export function ShopProvider({ children }) {
 
   const cartCount = useMemo(
     () => cart.reduce((sum, item) => sum + (item.qty || 1), 0),
-    [cart],
+    [cart]
   )
 
   const cartTotal = useMemo(
     () => cart.reduce((sum, item) => sum + item.price * (item.qty || 1), 0),
-    [cart],
+    [cart]
   )
 
   const wishlistCount = wishlist.length
@@ -191,7 +314,7 @@ export function ShopProvider({ children }) {
                   price: unitPrice,
                   maxStock: maxAllowed,
                 }
-              : item,
+              : item
           )
         }
 
@@ -213,7 +336,7 @@ export function ShopProvider({ children }) {
       if (added && open) setCartOpen(true)
       return added
     },
-    [],
+    []
   )
 
   const updateCartQty = useCallback((key, qty) => {
@@ -254,7 +377,7 @@ export function ShopProvider({ children }) {
       const key = `${productId}::${size}`
       return cart.find((item) => item.key === key)?.qty || 0
     },
-    [cart],
+    [cart]
   )
 
   const getCartQtyForProduct = useCallback(
@@ -262,7 +385,7 @@ export function ShopProvider({ children }) {
       cart
         .filter((item) => item.id === productId)
         .reduce((sum, item) => sum + (item.qty || 0), 0),
-    [cart],
+    [cart]
   )
 
   const removeFromCart = useCallback((key) => {
@@ -291,7 +414,7 @@ export function ShopProvider({ children }) {
 
   const isInWishlist = useCallback(
     (productId) => wishlist.some((item) => item.id === productId),
-    [wishlist],
+    [wishlist]
   )
 
   const value = useMemo(
@@ -340,7 +463,7 @@ export function ShopProvider({ children }) {
       toggleWishlist,
       isInWishlist,
       stockTick,
-    ],
+    ]
   )
 
   return <ShopContext.Provider value={value}>{children}</ShopContext.Provider>

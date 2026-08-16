@@ -11,7 +11,6 @@ import {
 import { ROUTES, categoryPath } from '../../config'
 import { categoryGroups } from '../../data/siteData'
 import { useShop } from '../../context/ShopContext'
-import logoLight from '../../assets/images/logo-light.png'
 
 const SOCIAL_LINKS = [
   {
@@ -46,9 +45,7 @@ const Footer = () => {
       <div className="container footer-container">
         <div className="footer-grid">
           <div className="footer-brand">
-            <Link to={ROUTES.HOME} className="footer-logo" aria-label="PahadLink home">
-              <img src={logoLight} alt="PahadLink" className="footer-logo__img" />
-            </Link>
+            <h4 className="footer-brand__heading">About company</h4>
             <p>
               Pure Himalayan foods, crafts, and everyday essentials - sourced from
               local makers across Uttarakhand and delivered across India.
@@ -88,7 +85,6 @@ const Footer = () => {
             <h4>Help</h4>
             <ul>
               <li><Link to={ROUTES.CONTACT}>Contact us</Link></li>
-              <li><Link to={ROUTES.REFUNDS}>Shipping & returns</Link></li>
               <li><Link to={ROUTES.ORDERS}>Track order</Link></li>
               <li>
                 <button
@@ -145,7 +141,6 @@ const Footer = () => {
               <Link to={ROUTES.ABOUT}>About</Link>
               <Link to={ROUTES.TERMS}>Terms</Link>
               <Link to={ROUTES.PRIVACY}>Privacy</Link>
-              <Link to={ROUTES.REFUNDS}>Refunds</Link>
               <Link to={ROUTES.CONTACT}>Contact</Link>
             </nav>
             <div className="footer-social" aria-label="Social media">

@@ -8,8 +8,6 @@ export const ORDER_STATUSES = [
   'out_for_delivery',
   'delivered',
   'cancelled',
-  'return_requested',
-  'returned',
 ]
 
 export const PAYMENT_STATUSES = ['pending', 'paid', 'failed', 'refunded']
@@ -17,13 +15,11 @@ export const PAYMENT_STATUSES = ['pending', 'paid', 'failed', 'refunded']
 /** PahadLink fulfilment path */
 export const STATUS_TRANSITIONS = {
   pending: ['confirmed', 'cancelled'],
-  confirmed: ['processing', 'shipped', 'cancelled'],
-  processing: ['shipped', 'cancelled'],
+  confirmed: ['processing', 'shipped'],
+  processing: ['shipped'],
   shipped: ['out_for_delivery', 'delivered'],
   out_for_delivery: ['delivered'],
-  delivered: ['return_requested'],
-  return_requested: ['returned', 'delivered'],
-  returned: [],
+  delivered: [],
   cancelled: [],
 }
 
@@ -35,8 +31,6 @@ export const STATUS_TIMELINE_NOTES = {
   out_for_delivery: 'Out for delivery',
   delivered: 'Delivered successfully',
   cancelled: 'Order cancelled',
-  return_requested: 'Return requested',
-  returned: 'Return completed',
 }
 
 const orderItemSchema = new mongoose.Schema(
@@ -120,7 +114,6 @@ const orderSchema = new mongoose.Schema(
       comment: { type: String, default: '', maxlength: 500 },
       createdAt: { type: Date, default: null },
     },
-    returnReason: { type: String, default: '', maxlength: 500 },
     notes: { type: String, default: '', maxlength: 500 },
     timeline: [
       {
@@ -165,7 +158,6 @@ orderSchema.methods.toSafeJSON = function toSafeJSON() {
     assignedSeller: this.assignedSeller,
     stockDeducted: this.stockDeducted,
     review: this.review,
-    returnReason: this.returnReason,
     notes: this.notes,
     timeline: this.timeline || [],
     createdAt: this.createdAt,

@@ -11,17 +11,22 @@
     "dev": "vite --host 0.0.0.0 --port 5173",
     "build": "vite build",
     "build:pages": "vite build && node scripts/pages-spa-fallback.js",
+    "build:vercel": "vite build && node scripts/pages-spa-fallback.js",
     "deploy": "npm run build:pages && npx --yes gh-pages -d dist -b gh-pages -r https://github.com/1mukeshr/pahadlink-harvest.git",
-    "deploy:harvest": "npm run deploy",
     "lint": "eslint .",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "server": "node server/index.js",
     "start:api": "node server/index.js",
+    "db:start": "powershell -ExecutionPolicy Bypass -File scripts/start-mongodb.ps1",
+    "db:stop": "powershell -ExecutionPolicy Bypass -File scripts/stop-mongodb.ps1",
     "seed:admin": "node server/scripts/seedAdmin.js",
     "seed:seller": "node server/scripts/seedSeller.js",
     "seed:crm": "node server/scripts/seedAdminCrm.js",
     "test:auth": "node scripts/test-auth.mjs",
-    "test:full": "node scripts/test-full.mjs"
+    "test:full": "node scripts/test-full.mjs",
+    "test:conditions": "node scripts/test-conditions.mjs",
+    "banners:category": "node scripts/build-category-banners.mjs",
+    "banners:home": "node scripts/build-home-banners.mjs"
   },
   "dependencies": {
     "@pahadlink/shared": "file:./shared",
@@ -43,6 +48,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@imgly/background-removal-node": "^1.4.5",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
@@ -50,7 +56,9 @@
     "eslint": "^10.6.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
+    "fontkit": "^2.0.4",
     "globals": "^17.7.0",
+    "sharp": "^0.35.3",
     "vite": "^8.1.1"
   }
 }

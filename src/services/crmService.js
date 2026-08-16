@@ -41,8 +41,3 @@ export async function deleteLead(id) {
   const { data } = await api.delete(`/crm/leads/${id}`)
   return data
 }
-
-export async function fetchCrmCustomers() {
-  const { data } = await api.get('/crm/customers')
-  return data.customers
-}

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { SearchIcon, CopyIcon, CheckIcon, RefreshIcon } from '../components/icons'
-import { fetchInventory } from '../services/orderService'
+import { CopyIcon, CheckIcon } from '../components/icons'
+import { fetchInventory, updateInventoryStock } from '../services/orderService'
 import { getProductById } from '../data/siteData'
-import { ROUTES, productPath } from '../config'
+import { ROUTES } from '../config'
 import AdminLayout from './AdminLayout'
+import { useAdminHeaderSearch } from './adminChrome'
 import { StockHealthBar, HorizontalBars } from './AdminCharts'
 
 const stockLevel = (qty) => {
@@ -79,15 +80,46 @@ export default function InventoryDesk({ bare = false }) {
   const [debouncedQuery, setDebouncedQuery] = useState('')
   const [filter, setFilter] = useState('all')
   const [category, setCategory] = useState('all')
-  const [sort, setSort] = useState('risk')
-  const [updatedAt, setUpdatedAt] = useState(null)
   const [detail, setDetail] = useState(null)
   const [copiedId, setCopiedId] = useState('')
+  const [stockDraft, setStockDraft] = useState(null)
+  const [savingStock, setSavingStock] = useState(false)
+  const [stockMessage, setStockMessage] = useState('')
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query.trim()), 280)
     return () => clearTimeout(t)
   }, [query])
+
+  useEffect(() => {
+    if (!detail) {
+      setStockDraft(null)
+      setStockMessage('')
+      return
+    }
+    if (detail.sizes?.length) {
+      const next = {}
+      for (const s of detail.sizes) next[s.size] = String(s.qty)
+      setStockDraft(next)
+    } else {
+      setStockDraft({ _: String(detail.total) })
+    }
+    setStockMessage('')
+  }, [detail])
+
+  useEffect(() => {
+    if (!stockMessage) return undefined
+    const t = setTimeout(() => setStockMessage(''), 2600)
+    return () => clearTimeout(t)
+  }, [stockMessage])
+
+  useAdminHeaderSearch({
+    placeholder: 'Search products…',
+    value: query,
+    onChange: (e) => setQuery(e.target.value),
+    onClear: () => setQuery(''),
+    'aria-label': 'Search inventory',
+  })
 
   useEffect(() => {
     if (!detail) return undefined
@@ -109,7 +141,6 @@ export default function InventoryDesk({ bare = false }) {
     try {
       const items = await fetchInventory()
       setInventory(items || [])
-      setUpdatedAt(new Date())
       setDetail((prev) => {
         if (!prev) return null
         const nextRows = normalizeRows(items || [])
@@ -170,18 +201,14 @@ export default function InventoryDesk({ bare = false }) {
     })
 
     const riskRank = { out: 0, low: 1, ok: 2 }
-    list = [...list].sort((a, b) => {
-      if (sort === 'name') return a.name.localeCompare(b.name)
-      if (sort === 'stock-asc') return a.total - b.total || a.name.localeCompare(b.name)
-      if (sort === 'stock-desc') return b.total - a.total || a.name.localeCompare(b.name)
-      return (
+    list = [...list].sort(
+      (a, b) =>
         (riskRank[a.level] ?? 9) - (riskRank[b.level] ?? 9) ||
         a.total - b.total ||
         a.name.localeCompare(b.name)
-      )
-    })
+    )
     return list
-  }, [rows, debouncedQuery, filter, category, sort])
+  }, [rows, debouncedQuery, filter, category])
 
   const categoryBars = useMemo(() => {
     const map = new Map()
@@ -217,63 +244,42 @@ export default function InventoryDesk({ bare = false }) {
     }
   }
 
+  const saveStock = async (size) => {
+    if (!detail || !stockDraft) return
+    const raw = size ? stockDraft[size] : stockDraft._
+    const stock = Math.max(0, Math.floor(Number(raw)))
+    if (!Number.isFinite(stock)) {
+      setStockMessage('Enter a valid stock number')
+      return
+    }
+    setSavingStock(true)
+    setStockMessage('')
+    try {
+      const data = await updateInventoryStock(detail.productId, {
+        stock,
+        ...(size ? { size } : null),
+      })
+      if (data?.items) {
+        setInventory(data.items)
+        const next = normalizeRows(data.items).find(
+          (r) => r.productId === detail.productId
+        )
+        if (next) setDetail(next)
+      } else await load()
+      setStockMessage('Stock saved')
+    } catch (err) {
+      setStockMessage(err.message || 'Could not save stock')
+    } finally {
+      setSavingStock(false)
+    }
+  }
+
   const desk = (
     <>
       <div className="admin-desk admin-inventory-page">
-        <header className="admin-head admin-head--with-search admin-inv-page-head">
+        <header className="admin-head admin-inv-page-head">
           <div className="admin-head__copy">
             <h1>Inventory</h1>
-          </div>
-          <div className="admin-head__search">
-            <label className="admin-toolbar__search">
-              <span className="admin-toolbar__search-ico" aria-hidden="true">
-                <SearchIcon size={16} />
-              </span>
-              <input
-                type="search"
-                placeholder="Search products…"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                aria-label="Search inventory"
-              />
-              {query ? (
-                <button
-                  type="button"
-                  className="admin-toolbar__clear"
-                  onClick={() => setQuery('')}
-                  aria-label="Clear search"
-                  title="Clear"
-                >
-                  ×
-                </button>
-              ) : null}
-            </label>
-          </div>
-          <div className="admin-head__actions">
-            {updatedAt && (
-              <span
-                className="admin-head__meta"
-                title={updatedAt.toLocaleString('en-IN')}
-              >
-                Updated{' '}
-                {updatedAt.toLocaleTimeString('en-IN', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
-              </span>
-            )}
-            <button
-              type="button"
-              className={`admin-btn admin-btn--ghost admin-btn--icon${
-                loading ? ' is-spinning' : ''
-              }`}
-              onClick={load}
-              disabled={loading}
-              aria-label={loading ? 'Refreshing inventory' : 'Refresh inventory'}
-              title={loading ? 'Refreshing…' : 'Refresh'}
-            >
-              <RefreshIcon size={16} />
-            </button>
           </div>
         </header>
 
@@ -281,42 +287,6 @@ export default function InventoryDesk({ bare = false }) {
           <p className="admin-banner admin-banner--error" role="alert">
             {error}
           </p>
-        )}
-
-        {(stats.low > 0 || stats.out > 0) && (
-          <div className="admin-inv-alert" role="status">
-            <div>
-              <strong>
-                {stats.out + stats.low} product
-                {stats.out + stats.low === 1 ? '' : 's'} need attention
-              </strong>
-              <p>
-                {stats.out ? `${stats.out} out of stock` : null}
-                {stats.out && stats.low ? ' · ' : null}
-                {stats.low ? `${stats.low} running low` : null}
-              </p>
-            </div>
-            <div className="admin-inv-alert__actions">
-              {stats.out > 0 && (
-                <button
-                  type="button"
-                  className="admin-btn admin-btn--danger"
-                  onClick={() => setFilter('out')}
-                >
-                  Show out
-                </button>
-              )}
-              {stats.low > 0 && (
-                <button
-                  type="button"
-                  className="admin-btn"
-                  onClick={() => setFilter('low')}
-                >
-                  Show low
-                </button>
-              )}
-            </div>
-          </div>
         )}
 
         <section className="admin-inv-kpis" aria-label="Inventory summary">
@@ -400,23 +370,6 @@ export default function InventoryDesk({ bare = false }) {
                 </p>
               </div>
             </header>
-
-            <div className="admin-inventory__toolbar admin-inventory__toolbar--page">
-              <label className="admin-inventory__sort">
-                <span className="visually-hidden">Sort</span>
-                <select
-                  className="admin-select"
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value)}
-                  aria-label="Sort inventory"
-                >
-                  <option value="risk">Risk first</option>
-                  <option value="name">Name</option>
-                  <option value="stock-asc">Stock ↑</option>
-                  <option value="stock-desc">Stock ↓</option>
-                </select>
-              </label>
-            </div>
 
             {categories.length > 1 && (
               <div className="admin-inv-cats" role="group" aria-label="Categories">
@@ -611,12 +564,33 @@ export default function InventoryDesk({ bare = false }) {
             {detail.sizes?.length ? (
               <section className="admin-inv-popup__section">
                 <h3>Stock by size</h3>
-                <ul className="admin-inv-popup__sizes">
+                <ul className="admin-inv-popup__sizes admin-inv-popup__sizes--edit">
                   {detail.sizes.map((s) => (
                     <li key={s.size} className={`is-${s.level}`}>
                       <span>{s.size}</span>
-                      <strong>{s.qty}</strong>
-                      <em>{LEVEL_LABEL[s.level]}</em>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1"
+                        className="admin-inv-popup__qty"
+                        value={stockDraft?.[s.size] ?? String(s.qty)}
+                        disabled={savingStock}
+                        onChange={(e) =>
+                          setStockDraft((prev) => ({
+                            ...(prev || {}),
+                            [s.size]: e.target.value,
+                          }))
+                        }
+                        aria-label={`${s.size} stock`}
+                      />
+                      <button
+                        type="button"
+                        className="admin-btn admin-btn--ghost"
+                        disabled={savingStock}
+                        onClick={() => saveStock(s.size)}
+                      >
+                        Save
+                      </button>
                     </li>
                   ))}
                 </ul>
@@ -624,21 +598,52 @@ export default function InventoryDesk({ bare = false }) {
             ) : (
               <section className="admin-inv-popup__section">
                 <h3>Stock</h3>
-                <p className="admin-inv-popup__simple">
-                  {detail.total} unit{detail.total === 1 ? '' : 's'} available
-                </p>
+                <div className="admin-inv-popup__edit-row">
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    className="admin-inv-popup__qty"
+                    value={stockDraft?._ ?? String(detail.total)}
+                    disabled={savingStock}
+                    onChange={(e) =>
+                      setStockDraft({ _: e.target.value })
+                    }
+                    aria-label="Stock units"
+                  />
+                  <button
+                    type="button"
+                    className="admin-btn"
+                    disabled={savingStock}
+                    onClick={() => saveStock()}
+                  >
+                    {savingStock ? 'Saving…' : 'Save stock'}
+                  </button>
+                </div>
               </section>
             )}
 
-            <div className="admin-inv-popup__actions">
-              <Link
-                to={productPath(detail.productId)}
-                className="admin-btn admin-btn--brand"
-                target="_blank"
-                rel="noreferrer"
+            {stockMessage ? (
+              <p
+                className={`admin-alert${
+                  /could not|valid|fail/i.test(stockMessage)
+                    ? ''
+                    : ' admin-alert--ok'
+                }`}
+                role="status"
               >
-                View on store
-              </Link>
+                {stockMessage}
+              </p>
+            ) : null}
+
+            <div className="admin-inv-popup__actions">
+              <button
+                type="button"
+                className="admin-btn admin-btn--brand"
+                onClick={() => setDetail(null)}
+              >
+                Close
+              </button>
               <Link to={ROUTES.ADMIN_ORDERS} className="admin-btn">
                 Open orders
               </Link>

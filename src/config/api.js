@@ -208,12 +208,3 @@ function detectApiBase() {
 }
 
 export const getApiBaseUrl = () => detectApiBase()
-
-export function getRuntimeFirebaseConfig() {
-  if (typeof globalThis === 'undefined') return null
-  return globalThis.__PAHADLINK_FIREBASE__ || null
-}
-
-export const API_BASE_URL = normalizeApiUrl(
-  import.meta.env.VITE_API_URL || '/api'
-)

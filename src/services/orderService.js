@@ -1,20 +1,6 @@
 import api from './api'
 import { resolveProductImage } from '../data/siteData'
 
-export const ORDER_STATUSES = [
-  'pending',
-  'confirmed',
-  'processing',
-  'shipped',
-  'out_for_delivery',
-  'delivered',
-  'cancelled',
-  'return_requested',
-  'returned',
-]
-
-export const PAYMENT_STATUSES = ['pending', 'paid', 'failed', 'refunded']
-
 /** Customer-facing labels */
 export const STATUS_LABELS = {
   pending: 'Order Placed',
@@ -24,15 +10,13 @@ export const STATUS_LABELS = {
   out_for_delivery: 'Out for Delivery',
   delivered: 'Delivered',
   cancelled: 'Cancelled',
-  return_requested: 'Return requested',
-  returned: 'Returned',
 }
 
 /**
  * Delivery tracker steps:
  * Order Placed → Confirmed → Packed → Shipped → Out for delivery → Delivered
  */
-export const DELIVERY_FLOW_STEPS = [
+const DELIVERY_FLOW_STEPS = [
   {
     key: 'pending',
     label: 'Order Placed',
@@ -78,52 +62,17 @@ export const DELIVERY_FLOW_STEPS = [
 ]
 
 /** Map internal status → tracker index */
-export const DELIVERY_FLOW_INDEX = {
+const DELIVERY_FLOW_INDEX = {
   pending: 0,
   confirmed: 1,
   processing: 2,
   shipped: 3,
   out_for_delivery: 4,
   delivered: 5,
-  return_requested: 5,
-  returned: 5,
   cancelled: -1,
 }
 
-export function deliveryHeadline(status) {
-  switch (String(status || '').toLowerCase()) {
-    case 'pending':
-      return 'Order Placed'
-    case 'confirmed':
-      return 'Confirmed'
-    case 'processing':
-      return 'Packed'
-    case 'shipped':
-      return 'Shipped'
-    case 'out_for_delivery':
-      return 'Out for delivery'
-    case 'delivered':
-      return 'Delivered'
-    case 'cancelled':
-      return 'Order cancelled'
-    case 'return_requested':
-      return 'Return requested'
-    case 'returned':
-      return 'Return completed'
-    default:
-      return 'Order update'
-  }
-}
-
-export function deliveryHint(status) {
-  const key = String(status || '').toLowerCase()
-  const step = DELIVERY_FLOW_STEPS.find(
-    (s) => s.key === key || (s.matchStatuses || []).includes(key)
-  )
-  return step?.hint || STATUS_LABELS[key] || ''
-}
-
-export const PAYMENT_STATUS_LABELS = {
+const PAYMENT_STATUS_LABELS = {
   pending: 'Pending',
   paid: 'Paid',
   failed: 'Failed',
@@ -211,21 +160,6 @@ export function buildDeliveryActivity(order) {
     }
   })
 
-  for (const key of ['return_requested', 'returned']) {
-    const hit = byStatus.get(key)
-    if (hit) {
-      built.push({
-        status: key,
-        label: STATUS_LABELS[key],
-        note: hit.note || STATUS_LABELS[key],
-        at: hit.at,
-        isPast: key === 'returned',
-        isCurrent: status === key,
-        isUpcoming: false,
-      })
-    }
-  }
-
   return built
 }
 
@@ -279,7 +213,6 @@ export function mapApiOrderToUi(order) {
     status: order.status,
     statusLabel: STATUS_LABELS[order.status] || order.status,
     review: order.review,
-    returnReason: order.returnReason,
     timeline: order.timeline || [],
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
@@ -304,6 +237,15 @@ export async function fetchOrderStats(params = {}) {
 export async function fetchInventory() {
   const { data } = await api.get('/orders/inventory')
   return data.items
+}
+
+/** Admin: update product stock (optional size) */
+export async function updateInventoryStock(productId, { stock, size } = {}) {
+  const { data } = await api.put(`/orders/inventory/${encodeURIComponent(productId)}`, {
+    stock,
+    ...(size ? { size } : null),
+  })
+  return data
 }
 
 /** Public storefront stock levels */
@@ -336,20 +278,5 @@ export async function fetchFirstOrderStatus(email = '') {
 
 export async function updateOrder(id, payload) {
   const { data } = await api.patch(`/orders/${id}`, payload)
-  return data
-}
-
-export async function requestReturn(id, reason) {
-  const { data } = await api.post(`/orders/${id}/return`, { reason })
-  return data
-}
-
-export async function submitReview(id, { rating, comment }) {
-  const { data } = await api.post(`/orders/${id}/review`, { rating, comment })
-  return data
-}
-
-export async function deleteOrder(id) {
-  const { data } = await api.delete(`/orders/${id}`)
   return data
 }

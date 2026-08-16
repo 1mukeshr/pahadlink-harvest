@@ -5,7 +5,6 @@ export {
   FREE_SHIP_AT,
   SHIPPING_FEE,
   FIRST_ORDER_DISCOUNT,
-  COUPONS,
   normalizeCouponCode,
   calcShipping,
   applyCoupon,

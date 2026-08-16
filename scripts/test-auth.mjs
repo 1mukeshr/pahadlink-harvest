@@ -1,14 +1,18 @@
 /**
- * Quick auth smoke test against a running API.
+ * Auth smoke test — uses the single project test account (admin).
  * Usage: node scripts/test-auth.mjs [API_BASE]
- * Default API_BASE: http://127.0.0.1:5000/api
  */
+import 'dotenv/config'
+import { purgeTestUsers } from './lib/purge-test-users.mjs'
+
 const base = (process.argv[2] || 'http://127.0.0.1:5000/api').replace(/\/$/, '')
+const username = process.env.ADMIN_USERNAME || 'admin'
+const password = process.env.ADMIN_PASSWORD || 'admin123'
 
 async function main() {
-  const stamp = Date.now()
-  const email = `smoke_${stamp}@pahadlink.test`
-  const password = 'pass1234'
+  // Clear leftover temporary test users from prior runs
+  const purged = await purgeTestUsers()
+  if (purged) console.log('OK purged temp users', purged)
 
   const health = await fetch(`${base}/health`)
   const healthBody = await health.json()
@@ -17,33 +21,25 @@ async function main() {
   }
   console.log('OK health', healthBody.database, healthBody.mongo)
 
-  const regRes = await fetch(`${base}/auth/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: 'Smoke Test', email, password }),
-  })
-  const regBody = await regRes.json()
-  if (regRes.status !== 201 || !regBody.token) {
-    throw new Error(`Register failed: ${regRes.status} ${JSON.stringify(regBody)}`)
-  }
-  console.log('OK register', regBody.user.email)
-
   const loginRes = await fetch(`${base}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: email, password }),
+    body: JSON.stringify({ username, password }),
   })
   const loginBody = await loginRes.json()
   if (loginRes.status !== 200 || !loginBody.token) {
     throw new Error(`Login failed: ${loginRes.status} ${JSON.stringify(loginBody)}`)
   }
-  console.log('OK login', loginBody.user.username)
+  if (loginBody.user?.role !== 'admin') {
+    throw new Error(`Expected admin role, got ${loginBody.user?.role}`)
+  }
+  console.log('OK login', loginBody.user.username, loginBody.user.role)
 
   const meRes = await fetch(`${base}/auth/me`, {
     headers: { Authorization: `Bearer ${loginBody.token}` },
   })
   const meBody = await meRes.json()
-  if (meRes.status !== 200 || meBody.user?.email !== email) {
+  if (meRes.status !== 200 || meBody.user?.username !== username) {
     throw new Error(`Me failed: ${meRes.status} ${JSON.stringify(meBody)}`)
   }
   console.log('OK me', meBody.user.id)

@@ -6,9 +6,6 @@ import { CloseIcon, HeartIcon } from '../icons'
 
 const formatPrice = (value) => `₹${Number(value || 0).toLocaleString('en-IN')}`
 
-/**
- * Global wishlist drawer — keeps users on their current page.
- */
 const WishlistDrawer = () => {
   const {
     wishlist,
@@ -103,13 +100,6 @@ const WishlistDrawer = () => {
                       {item.name}
                     </Link>
                     <strong>{formatPrice(item.price)}</strong>
-                    <Link
-                      to={productPath(item.id)}
-                      className="wishlist-drawer__view"
-                      onClick={closeWishlist}
-                    >
-                      Choose options
-                    </Link>
                   </div>
 
                   <button

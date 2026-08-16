@@ -6,7 +6,7 @@ const baseProps = {
   strokeLinejoin: 'round',
 }
 
-export const Icon = ({ children, className = '', size = 24, ...props }) => (
+const Icon = ({ children, className = '', size = 24, ...props }) => (
   <svg
     viewBox="0 0 24 24"
     width={size}
@@ -185,7 +185,7 @@ export const CheckCircleIcon = (props) => (
   </Icon>
 )
 
-export const SpiceIcon = (props) => (
+const SpiceIcon = (props) => (
   <Icon {...props}>
     <path d="M12 2c1.5 3 4 5.5 4 9a4 4 0 0 1-8 0c0-3.5 2.5-6 4-9z" />
     <path d="M12 22v-4" />
@@ -199,57 +199,6 @@ export const HoneyIcon = (props) => (
     <path d="M6.7 7.3h10.6v10.2a2 2 0 0 1-2 2H8.7a2 2 0 0 1-2-2V7.3z" />
     <path d="M9.6 12.2h4.8" />
     <path d="M9.6 15.2h4.8" />
-  </Icon>
-)
-
-export const TeaIcon = (props) => (
-  <Icon {...props}>
-    <path d="M17 8h1a4 4 0 0 1 0 8h-1" />
-    <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V8z" />
-    <path d="M6 2v2" />
-    <path d="M10 2v2" />
-    <path d="M14 2v2" />
-  </Icon>
-)
-
-export const JarIcon = (props) => (
-  <Icon {...props}>
-    <path d="M9 3h6l1 3H8l1-3z" />
-    <path d="M8 6h8v13a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V6z" />
-    <path d="M10 10h4" />
-    <path d="M10 14h4" />
-  </Icon>
-)
-
-export const GrainIcon = (props) => (
-  <Icon {...props}>
-    <path d="M12 2v3" />
-    <path d="M8.5 4.5 10 8" />
-    <path d="M15.5 4.5 14 8" />
-    <path d="M6 9l2.5 1.5" />
-    <path d="M18 9l-2.5 1.5" />
-    <ellipse cx="12" cy="14" rx="6" ry="7" />
-    <path d="M8 14h8" />
-    <path d="M9 17h6" />
-  </Icon>
-)
-
-export const RiceIcon = (props) => (
-  <Icon {...props}>
-    <path d="M5 18c2-6 4-9 7-12 3 3 5 6 7 12" />
-    <path d="M8 16h8" />
-    <path d="M10 13h4" />
-    <path d="M11 10h2" />
-  </Icon>
-)
-
-export const DalIcon = (props) => (
-  <Icon {...props}>
-    <ellipse cx="8" cy="10" rx="2.5" ry="3" />
-    <ellipse cx="16" cy="10" rx="2.5" ry="3" />
-    <ellipse cx="12" cy="15" rx="2.5" ry="3" />
-    <ellipse cx="8" cy="18" rx="2" ry="2.5" />
-    <ellipse cx="16" cy="18" rx="2" ry="2.5" />
   </Icon>
 )
 
@@ -269,13 +218,13 @@ export const OrganicFoodIcon = (props) => (
   </Icon>
 )
 
-export const ClothingIcon = (props) => (
+const ClothingIcon = (props) => (
   <Icon {...props}>
     <path d="M9.2 4h5.6l2 2.4L20 8.2l-2.4 2.2L15.8 9v11H8.2V9L6.4 10.4 4 8.2l3.2-1.8L9.2 4z" />
   </Icon>
 )
 
-export const HandicraftIcon = (props) => (
+const HandicraftIcon = (props) => (
   <Icon {...props}>
     <path d="M5.5 10.5h13l-1.4 8.2a1.6 1.6 0 0 1-1.6 1.3H8.5a1.6 1.6 0 0 1-1.6-1.3L5.5 10.5z" />
     <path d="M9.5 10.5V7.2a2.5 2.5 0 0 1 5 0v3.3" />
@@ -283,8 +232,7 @@ export const HandicraftIcon = (props) => (
   </Icon>
 )
 
-
-export const SweetsIcon = (props) => (
+const SweetsIcon = (props) => (
   <Icon {...props}>
     <circle cx="12" cy="13" r="7" />
     <circle cx="12" cy="13" r="3.2" />
@@ -301,88 +249,6 @@ export const GiftIcon = (props) => (
     <path d="M4 14h16" />
     <path d="M12 10v11" />
     <path d="M12 10c-2.1 0-3.4-1.4-3.4-2.8S10.1 4.6 12 6.8c1.9-2.2 3.4-1 3.4.4S14.1 10 12 10z" />
-  </Icon>
-)
-
-export const HatIcon = (props) => (
-  <Icon {...props}>
-    <path d="M4 14h16" />
-    <path d="M6 14c0-4 2.5-6 6-6s6 2 6 6" />
-    <path d="M10 8V6a2 2 0 0 1 4 0v2" />
-  </Icon>
-)
-
-export const ShawlIcon = (props) => (
-  <Icon {...props}>
-    <path d="M6 6h12l2 4v10H4V10l2-4z" />
-    <path d="M8 10h8" />
-    <path d="M8 14h8" />
-    <path d="M8 18h8" />
-  </Icon>
-)
-
-export const DressIcon = (props) => (
-  <Icon {...props}>
-    <path d="M9 4h6l2 4v12H7V8l2-4z" />
-    <path d="M10 10h4" />
-    <path d="M10 14h4" />
-  </Icon>
-)
-
-export const FabricIcon = (props) => (
-  <Icon {...props}>
-    <rect x="4" y="6" width="16" height="12" rx="2" />
-    <path d="M4 10h16" />
-    <path d="M4 14h16" />
-    <path d="M8 6v12" />
-    <path d="M16 6v12" />
-  </Icon>
-)
-
-export const WoodIcon = (props) => (
-  <Icon {...props}>
-    <path d="M8 8h8v12H8z" />
-    <path d="M10 8V5h4v3" />
-    <path d="M10 12h4" />
-    <path d="M10 16h4" />
-  </Icon>
-)
-
-export const BambooIcon = (props) => (
-  <Icon {...props}>
-    <path d="M9 4v16" />
-    <path d="M15 4v16" />
-    <path d="M7 8h4" />
-    <path d="M13 12h4" />
-    <path d="M7 16h4" />
-    <path d="M13 20h4" />
-  </Icon>
-)
-
-export const CopperIcon = (props) => (
-  <Icon {...props}>
-    <path d="M7 9h10l1 9H6l1-9z" />
-    <path d="M9 9V6h6v3" />
-    <path d="M8 14h8" />
-  </Icon>
-)
-
-export const HandmadeIcon = (props) => (
-  <Icon {...props}>
-    <path d="M8 12c0-3 1.5-5 4-5s4 2 4 5" />
-    <path d="M6 12h12v8H6z" />
-    <path d="M10 16h4" />
-  </Icon>
-)
-
-
-
-
-export const SnackIcon = (props) => (
-  <Icon {...props}>
-    <path d="M5 11h14l-1.5 8H6.5L5 11z" />
-    <path d="M9 7V5a3 3 0 0 1 6 0v2" />
-    <path d="M9 15h6" />
   </Icon>
 )
 
@@ -583,7 +449,7 @@ export const DownloadIcon = (props) => (
 )
 
 
-export const StarIcon = ({
+const StarIcon = ({
   filled = true,
   half = false,
   halfId = 'starHalf',
@@ -696,12 +562,6 @@ export const GoogleIcon = (props) => (
 )
 
 const categoryIcons = {
-  spices: SpiceIcon,
-  honey: HoneyIcon,
-  tea: TeaIcon,
-  pickles: JarIcon,
-  grains: GrainIcon,
-  handmade: BasketIcon,
   'organic-food': OrganicFoodIcon,
   'honey-natural': HoneyIcon,
   clothing: ClothingIcon,
@@ -713,70 +573,4 @@ const categoryIcons = {
 export const CategoryIcon = ({ name, className = '', size = 24 }) => {
   const IconComponent = categoryIcons[name] || SpiceIcon
   return <IconComponent className={className} size={size} strokeWidth={1.85} />
-}
-
-const subcategoryIcons = {
-  grain: GrainIcon,
-  rice: RiceIcon,
-  dal: DalIcon,
-  honey: HoneyIcon,
-  tea: TeaIcon,
-  jar: JarIcon,
-  spice: SpiceIcon,
-  leaf: LeafIcon,
-  hat: HatIcon,
-  shawl: ShawlIcon,
-  dress: DressIcon,
-  fabric: FabricIcon,
-  clothing: ClothingIcon,
-  wood: WoodIcon,
-  bamboo: BambooIcon,
-  copper: CopperIcon,
-  handmade: HandmadeIcon,
-  handicraft: HandicraftIcon,
-  sweet: SweetsIcon,
-  sweets: SweetsIcon,
-  snack: SnackIcon,
-  gift: GiftIcon,
-  basket: BasketIcon,
-}
-
-const resolveSubcategoryIcon = (name, categoryId) => {
-  const text = name.toLowerCase()
-
-  if (/honey/.test(text)) return 'honey'
-  if (/tea/.test(text)) return 'tea'
-  if (/jam|pickle/.test(text)) return 'jar'
-  if (/spice/.test(text)) return 'spice'
-  if (/rice/.test(text)) return 'rice'
-  if (/rajma|gahat|bhatt|dal/.test(text)) return 'dal'
-  if (/mandua|jhangora|mil/.test(text)) return 'grain'
-  if (/topi/.test(text)) return 'hat'
-  if (/pichod|pichor|shawl/.test(text)) return 'shawl'
-  if (/dress/.test(text)) return 'dress'
-  if (/handwoven|fabric/.test(text)) return 'fabric'
-  if (/wooden|wood/.test(text)) return 'wood'
-  if (/bamboo|ringaal/.test(text)) return 'bamboo'
-  if (/copper/.test(text)) return 'copper'
-  if (/handmade|handcraft/.test(text)) return 'handmade'
-  if (/mithai|sweet/.test(text)) return 'sweet'
-  if (/snack|rus/.test(text)) return 'snack'
-  if (/hamper|gift/.test(text)) return 'gift'
-
-  const categoryFallback = {
-    'organic-food': 'grain',
-    'honey-natural': 'honey',
-    clothing: 'clothing',
-    handicrafts: 'handicraft',
-    'snacks-sweets': 'sweet',
-    'gift-hampers': 'gift',
-  }
-
-  return categoryFallback[categoryId] || 'leaf'
-}
-
-export const SubcategoryIcon = ({ icon, name, categoryId, className = '', size = 18 }) => {
-  const iconKey = icon || resolveSubcategoryIcon(name, categoryId)
-  const IconComponent = subcategoryIcons[iconKey] || LeafIcon
-  return <IconComponent className={className} size={size} />
 }

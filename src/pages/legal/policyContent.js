@@ -19,7 +19,7 @@ export const policies = {
         heading: 'How we use your information',
         body: [
           'To process orders, arrange delivery, and provide order updates.',
-          'To respond to support requests about products, shipping, or returns.',
+          'To respond to support requests about products, shipping, or orders.',
           'To improve our website, product range, and customer experience.',
           'To send important service messages. Marketing messages are sent only with your consent where required.',
         ],
@@ -78,7 +78,7 @@ export const policies = {
         body: [
           'An order is confirmed once payment is successful and you receive confirmation from us.',
           'Prices are shown in INR and may change without prior notice. The price at checkout is the price charged.',
-          'We reserve the right to cancel an order in case of stock issues, pricing errors, or suspected fraud. If already paid, a refund will be initiated.',
+          'We reserve the right to cancel an order in case of stock issues, pricing errors, or suspected fraud. If already paid, the amount will be reversed to the original payment method.',
         ],
       },
       {
@@ -116,64 +116,6 @@ export const policies = {
         body: [
           'These terms are governed by the laws of India.',
           'For any dispute, our support team will first try to resolve it fairly. Courts in Uttarakhand shall have jurisdiction where applicable.',
-        ],
-      },
-    ],
-  },
-
-  refunds: {
-    id: 'refunds',
-    title: 'Refunds & returns',
-    updated: '14 July 2026',
-    intro:
-      'We want every order to feel fresh and trustworthy. Use this page for clear return and refund rules.',
-    sections: [
-      {
-        heading: 'When you can request a return',
-        body: [
-          'Damaged, spoiled, or defective product on arrival.',
-          'Wrong item or wrong size/weight sent by mistake.',
-          'Missing items from a multi-item order.',
-          'Please raise the request within 7 days of delivery with order ID and clear photos/videos.',
-        ],
-      },
-      {
-        heading: 'What is not returnable',
-        body: [
-          'Opened food or personal-care items that are not defective.',
-          'Products damaged due to improper storage after delivery.',
-          'Change-of-mind returns for consumables once delivered in good condition.',
-          'Free gifts or promotional items, unless the main product is eligible for return.',
-        ],
-      },
-      {
-        heading: 'How to raise a request',
-        body: [
-          'Contact us on WhatsApp or call +91 96904 21423, or email care@pahadlink.com.',
-          'Share your order ID, product name, issue, and photos of the package and product.',
-          'Our team will review and guide the next step (replacement, refund, or support resolution).',
-        ],
-      },
-      {
-        heading: 'Refund process',
-        body: [
-          'Approved refunds are usually started within 3-5 business days after confirmation.',
-          'Money is credited to the original payment method. Bank timing may take 5-7 additional business days.',
-          'For COD orders, refunds may be issued by UPI/bank transfer after verification.',
-        ],
-      },
-      {
-        heading: 'Replacements',
-        body: [
-          'Wherever stock allows, we prefer to replace damaged or incorrect items quickly.',
-          'If replacement is unavailable, a full or partial refund will be provided.',
-        ],
-      },
-      {
-        heading: 'Shipping on returns',
-        body: [
-          'If the issue is our fault (wrong/damaged item), return pickup or shipping support is arranged by us.',
-          'Approved prepaid return labels or pickup slots will be shared by support.',
         ],
       },
     ],

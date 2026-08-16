@@ -57,6 +57,15 @@ function wrap(user) {
       return toSafeJSON(user)
     },
     async save() {
+      // Persist fields assigned onto this wrap (e.g. cart/wishlist updates)
+      const {
+        comparePassword: _c,
+        toSafeJSON: _t,
+        save: _s,
+        _id: _i,
+        ...fields
+      } = this
+      Object.assign(user, fields)
       const users = readUsers()
       const idx = users.findIndex((u) => u.id === user.id)
       if (idx >= 0) users[idx] = user
@@ -123,6 +132,8 @@ export const fileUserStore = {
       phone: payload.phone || null,
       isPhoneVerified: false,
       isActive: true,
+      cart: Array.isArray(payload.cart) ? payload.cart : [],
+      wishlist: Array.isArray(payload.wishlist) ? payload.wishlist : [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     }

@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
 import { UserIcon, GoogleIcon } from '../../components/icons'
 import AuthLayout from '../../components/auth/AuthLayout'
 import PasswordField from '../../components/auth/PasswordField'
 import { useAuth } from '../../context/AuthContext'
 import {
   ROUTES,
+  ROLES,
+  homePathForRole,
   postCheckoutLoginState,
   resolvePostAuthPath,
 } from '../../config'
@@ -22,7 +24,8 @@ function resolveReturnPath(from) {
 const Login = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const { login, loginWithGoogle, setError } = useAuth()
+  const { login, loginWithGoogle, setError, isAuthenticated, user, loading } =
+    useAuth()
   const [form, setForm] = useState({ username: '', password: '', remember: false })
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
@@ -32,13 +35,32 @@ const Login = () => {
   const isCheckoutIntent =
     intent === 'checkout' || from.startsWith(ROUTES.CHECKOUT)
 
+  // Already signed in → leave the form (staff → desk, customer → home/return path).
+  if (!loading && isAuthenticated && user) {
+    if (user.role === ROLES.ADMIN || user.role === ROLES.SELLER) {
+      return <Navigate to={homePathForRole(user)} replace />
+    }
+    const path = resolvePostAuthPath(user, from, intent)
+    return (
+      <Navigate
+        to={path}
+        replace
+        state={
+          isCheckoutIntent && path === ROUTES.HOME
+            ? postCheckoutLoginState()
+            : undefined
+        }
+      />
+    )
+  }
+
   const onChange = (e) => {
     const { name, value, type, checked } = e.target
     setForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }))
   }
 
-  const goAfterAuth = (user) => {
-    const path = resolvePostAuthPath(user, from, intent)
+  const goAfterAuth = (nextUser) => {
+    const path = resolvePostAuthPath(nextUser, from, intent)
     navigate(path, {
       replace: true,
       state:
@@ -53,12 +75,21 @@ const Login = () => {
     setMessage('')
     setSubmitting(true)
     try {
-      const user = await login({
+      const nextUser = await login({
         username: form.username,
         password: form.password,
         remember: form.remember,
+        scope: 'shop',
       })
-      goAfterAuth(user)
+      if (nextUser?.role === ROLES.ADMIN || nextUser?.role === ROLES.SELLER) {
+        setMessage(
+          nextUser.role === ROLES.ADMIN
+            ? 'Admin accounts sign in at the Admin Portal only — open /admin/login.'
+            : 'Seller accounts sign in at the Admin Portal only — open /admin/login.'
+        )
+        return
+      }
+      goAfterAuth(nextUser)
     } catch (err) {
       setMessage(err.message)
       setError?.(err.message)
@@ -71,8 +102,16 @@ const Login = () => {
     setMessage('')
     setSubmitting(true)
     try {
-      const user = await loginWithGoogle()
-      goAfterAuth(user)
+      const nextUser = await loginWithGoogle()
+      if (nextUser?.role === ROLES.ADMIN || nextUser?.role === ROLES.SELLER) {
+        setMessage(
+          nextUser.role === ROLES.ADMIN
+            ? 'Admin accounts sign in at the Admin Portal only — open /admin/login.'
+            : 'Seller accounts sign in at the Admin Portal only — open /admin/login.'
+        )
+        return
+      }
+      goAfterAuth(nextUser)
     } catch (err) {
       setMessage(err.message || 'Google sign-in failed')
     } finally {
@@ -83,7 +122,14 @@ const Login = () => {
   return (
     <AuthLayout title="Welcome back">
       <form className="auth-form" onSubmit={onSubmit} noValidate>
-        {message && <p className="auth-alert auth-alert--error">{message}</p>}
+        {message && (
+          <p className="auth-alert auth-alert--error" role="alert">
+            {message}{' '}
+            {message.includes('Admin Portal') ? (
+              <Link to={ROUTES.ADMIN_LOGIN}>Go to admin login</Link>
+            ) : null}
+          </p>
+        )}
 
         <div className="form-field">
           <div className="input-wrapper">

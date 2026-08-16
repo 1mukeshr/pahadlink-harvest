@@ -2,7 +2,6 @@ import api from './api'
 import {
   buildRatingSummary,
   getHomeReviewFeed,
-  getSeedReviewsForProduct,
   mergeProductReviews,
 } from '../utils/ratings'
 import { STORAGE } from '../config'
@@ -134,26 +133,5 @@ export async function fetchRecentReviews(limit = 6) {
     reviews,
     summary: buildRatingSummary(reviews),
     source: 'local',
-  }
-}
-
-export async function fetchRatingSummaries(productIds = []) {
-  const ids = productIds.filter(Boolean).slice(0, 60)
-  if (!ids.length) return {}
-
-  try {
-    const { data } = await api.get('/reviews/summary', {
-      params: { ids: ids.join(',') },
-    })
-    return data.summaries || {}
-  } catch {
-    const summaries = {}
-    for (const id of ids) {
-      const product = getProductById(id)
-      const reviews = mergeProductReviews(product, getSeedReviewsForProduct(product))
-      const summary = buildRatingSummary(reviews)
-      summaries[id] = { average: summary.average, count: summary.count }
-    }
-    return summaries
   }
 }

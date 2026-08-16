@@ -1,8 +1,10 @@
 const brand = {
   name: 'PahadLink',
-  primary: '#E62978',
+  // `primary` highlights amounts, `secondary` paints the header band and headings.
+  primary: '#E65100',
   secondary: '#0A4F33',
-  bg: '#f7f5f2',
+  accent: '#FF9800',
+  bg: '#f7f6f2',
 }
 
 function formatMoney(n) {

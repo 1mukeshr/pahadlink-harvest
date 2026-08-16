@@ -1,5 +1,4 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
-import { SearchIcon, RefreshIcon } from '../components/icons'
 import {
   CRM_SOURCES,
   CRM_STATUSES,
@@ -10,6 +9,7 @@ import {
   updateLead,
 } from '../services/crmService'
 import AdminLayout from './AdminLayout'
+import { useAdminHeaderSearch } from './adminChrome'
 
 const STATUS_LABELS = {
   new: 'New',
@@ -67,12 +67,19 @@ export default function LeadsDesk({ bare = false }) {
   const [saving, setSaving] = useState(false)
   const [expandedId, setExpandedId] = useState('')
   const [noteDrafts, setNoteDrafts] = useState({})
-  const [updatedAt, setUpdatedAt] = useState(null)
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQuery(query.trim()), 320)
     return () => clearTimeout(t)
   }, [query])
+
+  useAdminHeaderSearch({
+    placeholder: 'Search name, email, phone, interest',
+    value: query,
+    onChange: (e) => setQuery(e.target.value),
+    onClear: () => setQuery(''),
+    'aria-label': 'Search leads',
+  })
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -87,7 +94,6 @@ export default function LeadsDesk({ bare = false }) {
       ])
       setLeads(nextLeads)
       setStats(nextStats)
-      setUpdatedAt(new Date())
     } catch (err) {
       setError(err.message || 'Could not load leads')
     } finally {
@@ -173,57 +179,11 @@ export default function LeadsDesk({ bare = false }) {
 
   const desk = (
       <div className="admin-desk">
-        <header className="admin-head admin-head--with-search">
+        <header className="admin-head">
           <div className="admin-head__copy">
             <h1>Leads</h1>
           </div>
-          <div className="admin-head__search">
-            <label className="admin-toolbar__search">
-              <span className="admin-toolbar__search-ico" aria-hidden="true">
-                <SearchIcon size={16} />
-              </span>
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search name, email, phone, interest"
-                aria-label="Search leads"
-              />
-              {query ? (
-                <button
-                  type="button"
-                  className="admin-toolbar__clear"
-                  onClick={() => setQuery('')}
-                  aria-label="Clear search"
-                  title="Clear"
-                >
-                  ×
-                </button>
-              ) : null}
-            </label>
-          </div>
           <div className="admin-head__actions">
-            {updatedAt && (
-              <span className="admin-head__meta" title={updatedAt.toLocaleString('en-IN')}>
-                Updated{' '}
-                {updatedAt.toLocaleTimeString('en-IN', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                })}
-              </span>
-            )}
-            <button
-              type="button"
-              className={`admin-btn admin-btn--ghost admin-btn--icon${
-                loading ? ' is-spinning' : ''
-              }`}
-              onClick={load}
-              disabled={loading}
-              aria-label={loading ? 'Refreshing leads' : 'Refresh leads'}
-              title={loading ? 'Refreshing…' : 'Refresh'}
-            >
-              <RefreshIcon size={16} />
-            </button>
             <button
               type="button"
               className="admin-btn"
@@ -357,7 +317,14 @@ export default function LeadsDesk({ bare = false }) {
 
           {error && <p className="admin-alert">{error}</p>}
           {message && (
-            <p className="admin-alert admin-alert--ok" role="status">
+            <p
+              className={`admin-alert${
+                /fail|error|could not|required/i.test(message)
+                  ? ''
+                  : ' admin-alert--ok'
+              }`}
+              role="status"
+            >
               {message}
             </p>
           )}

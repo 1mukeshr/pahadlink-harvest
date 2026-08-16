@@ -87,7 +87,7 @@
 
 .order-invoice__btn--primary {
   color: #fff;
-  background: var(--primary, #e62978);
+  background: var(--primary, #0A4F33);
 }
 
 .order-invoice__btn--primary:hover {
@@ -101,8 +101,8 @@
 }
 
 .order-invoice__btn--secondary:hover:not(:disabled) {
-  border-color: color-mix(in srgb, var(--primary, #e62978) 35%, #e0e0e0);
-  background: #fff8fb;
+  border-color: color-mix(in srgb, var(--primary, #0A4F33) 35%, #e0e0e0);
+  background: #FFF9F2;
 }
 
 .order-invoice__btn--secondary:disabled {

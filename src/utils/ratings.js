@@ -1,11 +1,8 @@
 import { STORAGE } from '../config'
 import { products, testimonials } from '../data/siteData'
-import {
-  emptySummary,
-  buildRatingSummary,
-} from '@pahadlink/shared/ratings'
+import { buildRatingSummary } from '@pahadlink/shared/ratings'
 
-export { emptySummary, buildRatingSummary }
+export { buildRatingSummary }
 
 const SEED_NAMES = [
   { name: 'Ananya Joshi', location: 'Dehradun' },
@@ -52,7 +49,7 @@ function getLocalReviews(productId) {
 }
 
 /** Deterministic seed reviews so every product has ratings out of 5 */
-export function getSeedReviewsForProduct(product) {
+function getSeedReviewsForProduct(product) {
   if (!product?.id) return []
   const base = Number(product.rating) || 4.5
   const seedCount = 3 + (hashString(product.id) % 3)
@@ -94,18 +91,6 @@ export function mergeProductReviews(product, remoteReviews = [], { includeSeeds 
   return Array.from(byId.values()).sort(
     (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
   )
-}
-
-export function getProductRating(product, reviews) {
-  const list = reviews || mergeProductReviews(product, [])
-  const summary = buildRatingSummary(list)
-  if (summary.count > 0) return summary
-  const fallback = Number(product?.rating) || 0
-  return {
-    average: fallback,
-    count: fallback ? 12 : 0,
-    distribution: emptySummary().distribution,
-  }
 }
 
 export function getHomeReviewFeed(remote = []) {

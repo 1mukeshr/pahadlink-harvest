@@ -8,7 +8,6 @@ import {
   MailIcon,
   PackageIcon,
   PhoneIcon,
-  RefreshIcon,
   TruckIcon,
   WhatsAppIcon,
 } from '../icons'
@@ -43,13 +42,6 @@ const TOPICS = [
     Icon: TruckIcon,
     topic: 'Shipping',
     seed: 'Tell me about shipping and delivery time',
-  },
-  {
-    id: 'return',
-    label: 'Returns',
-    Icon: RefreshIcon,
-    topic: 'Returns & refunds',
-    seed: 'How do returns and refunds work?',
   },
   {
     id: 'product',
@@ -417,15 +409,6 @@ const SupportChat = () => {
                         className="support-chat__chip-link"
                       >
                         Sign in
-                      </Link>
-                    )}
-                    {msg.from === 'bot' && msg.topicId === 'return' && (
-                      <Link
-                        to={ROUTES.REFUNDS}
-                        className="support-chat__chip-link"
-                      >
-                        <RefreshIcon size={11} />
-                        Returns policy
                       </Link>
                     )}
                     {msg.from === 'bot' &&

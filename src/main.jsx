@@ -29,8 +29,8 @@ class RootErrorBoundary extends Component {
           <pre
             style={{
               whiteSpace: 'pre-wrap',
-              background: '#fff5f9',
-              border: '1px solid #f0d0dc',
+              background: '#FFF6EC',
+              border: '1px solid #F0D8B4',
               borderRadius: 8,
               padding: 12,
               fontSize: 13,

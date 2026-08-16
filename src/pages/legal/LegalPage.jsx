@@ -83,6 +83,5 @@ const LegalPage = ({ policyId }) => {
 
 export const PrivacyPage = () => <LegalPage policyId="privacy" />
 export const TermsPage = () => <LegalPage policyId="terms" />
-export const RefundsPage = () => <LegalPage policyId="refunds" />
 
 export default LegalPage

@@ -12,13 +12,51 @@ npm start
 ```
 
 - Website: http://localhost:5173  
+- Admin: http://localhost:5173/admin/login  
 - API: http://localhost:5000/api/health  
 - DB: `mongodb://127.0.0.1:27017/Pahadi_link_DB`  
-- Admin: `admin` / `admin123`
+- Test account (only one): `admin` / `admin123`
 
-## GitHub Pages + real backend (required for login/register online)
+URLs are clean path-based (no `/#/…`). Example: `/admin`, `/shop`, `/login`.
 
-GitHub Pages is **static** - it cannot run Express or MongoDB. You need a hosted API.
+## Deploy targets
+
+| Layer | Host | Repo |
+|-------|------|------|
+| Frontend | **Vercel** (recommended) or GitHub Pages | [`pahadlink-harvest`](https://github.com/1mukeshr/pahadlink-harvest) |
+| API | Render (`render.yaml`) | same repo |
+| DB | MongoDB Atlas | `Pahadi_link_DB` |
+
+Push frontend + API source to **`pahadlink-harvest`** (`harvest` remote):
+
+```bash
+git push harvest main
+```
+
+### Vercel (frontend)
+
+1. [vercel.com/new](https://vercel.com/new) → Import `1mukeshr/pahadlink-harvest`
+2. Framework: **Vite** (uses `vercel.json`)
+3. Build: `npm run build:vercel` · Output: `dist` · Root: `/`
+4. Optional env: `VITE_API_URL=https://pahadlink-api.onrender.com/api`  
+   (also baked into `public/runtime-config.json`)
+5. Deploy → open `https://YOUR-PROJECT.vercel.app`
+6. Firebase Console → Authentication → Authorized domains → add `YOUR-PROJECT.vercel.app`
+7. Render → `FRONTEND_URL` → append `,https://YOUR-PROJECT.vercel.app`
+
+### GitHub Pages (optional alternate)
+
+Live site: https://1mukeshr.github.io/pahadlink-harvest/
+
+```bash
+npm run deploy
+```
+
+Or push `main` and let `.github/workflows/deploy-pages.yml` run.
+
+## GitHub Pages / Vercel + real backend (required for login/register online)
+
+Static hosts cannot run Express or MongoDB. You need a hosted API.
 
 ### 1) MongoDB Atlas
 
@@ -36,14 +74,11 @@ GitHub Pages is **static** - it cannot run Express or MongoDB. You need a hosted
 3. Deploy, then open: `https://YOUR-SERVICE.onrender.com/api/health`  
    Expect: `{ "ok": true, ... }`
 
-### 3) Point the GitHub Pages frontend at the API
+### 3) Point the frontend at the API
 
-1. Repo → **Settings → Secrets and variables → Actions**
-2. Secret `VITE_API_URL` = `https://YOUR-SERVICE.onrender.com/api`
-3. Optionally set `public/runtime-config.json` → `{ "apiUrl": "https://YOUR-SERVICE.onrender.com/api" }`
-4. Push to `main` (or re-run **Deploy GitHub Pages**)
-
-Live site: https://1mukeshr.github.io/pahadlink-harvest/
+1. Keep `public/runtime-config.json` → `{ "apiUrl": "https://pahadlink-api.onrender.com/api" }`
+2. Or set Vercel / GitHub Actions env `VITE_API_URL` to the same value
+3. Push to `main` on `pahadlink-harvest`
 
 Auth smoke test:
 
@@ -61,6 +96,7 @@ pahadlink/
 ├── shared/       # Domain rules used by BOTH (coupons, prices, roles)
 ├── public/       # Static assets + runtime-config.json
 ├── scripts/      # Deploy / tooling scripts (not app runtime)
+├── vercel.json   # Vercel SPA frontend
 ├── render.yaml   # Render Blueprint for hosted API
 └── .github/workflows/deploy-pages.yml
 ```

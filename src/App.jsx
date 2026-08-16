@@ -1,72 +1,46 @@
-/**
- * App shell - keep thin.
- * Routes: src/routes/AppRoutes.jsx
- * Config: src/config/index.js
- *
- * HashRouter works reliably on GitHub project Pages
- * (https://1mukeshr.github.io/pahadlink-harvest/#/...).
- *
- * Admin/seller console lives in src/admin/ with its own CSS/layout —
- * storefront chrome is hidden on those routes.
- */
-import { HashRouter, useLocation } from 'react-router-dom'
+import { useLayoutEffect } from 'react'
+import { BrowserRouter, useNavigate } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
-import { ShopProvider } from './context/ShopContext'
-import {
-  Header,
-  CartDrawer,
-  WishlistDrawer,
-  MobileBottomNav,
-  ScrollToTop,
-  RouteProgress,
-} from './components/layout'
-import SupportChat from './components/support/SupportChat'
-import ThemePicker from './components/theme/ThemePicker'
+import { ScrollToTop, RouteProgress } from './components/layout'
 import AppRoutes from './routes/AppRoutes'
 
-function isAdminPlatformPath(pathname) {
-  return (
-    pathname === '/admin' ||
-    pathname.startsWith('/admin/') ||
-    pathname === '/seller' ||
-    pathname.startsWith('/seller/')
-  )
-}
+const ROUTER_BASENAME = (() => {
+  const base = String(import.meta.env.BASE_URL || '/').replace(/\/$/, '')
+  return base && base !== '/' ? base : undefined
+})()
 
-function StorefrontChrome({ children }) {
-  const { pathname } = useLocation()
-  const adminPlatform = isAdminPlatformPath(pathname)
+/** Old bookmarked /#/admin URLs → /admin (no hash). */
+function LegacyHashRedirect() {
+  const navigate = useNavigate()
 
-  if (adminPlatform) {
-    return children
-  }
+  useLayoutEffect(() => {
+    const { hash } = window.location
+    if (!hash.startsWith('#/')) return
 
-  return (
-    <>
-      <Header />
-      {children}
-      <CartDrawer />
-      <WishlistDrawer />
-      <MobileBottomNav />
-      <ThemePicker />
-      <SupportChat />
-    </>
-  )
+    const raw = hash.slice(1) || '/'
+    const qIndex = raw.indexOf('?')
+    const nextPath = (qIndex >= 0 ? raw.slice(0, qIndex) : raw) || '/'
+    const nextSearch = qIndex >= 0 ? raw.slice(qIndex) : ''
+
+    navigate({ pathname: nextPath, search: nextSearch }, { replace: true })
+
+    const base = ROUTER_BASENAME || ''
+    window.history.replaceState(null, '', `${base}${nextPath}${nextSearch}`)
+  }, [navigate])
+
+  return null
 }
 
 function App() {
   return (
-    <AuthProvider>
-      <ShopProvider>
-        <HashRouter>
-          <ScrollToTop />
-          <RouteProgress />
-          <StorefrontChrome>
-            <AppRoutes />
-          </StorefrontChrome>
-        </HashRouter>
-      </ShopProvider>
-    </AuthProvider>
+    <BrowserRouter basename={ROUTER_BASENAME}>
+      <AuthProvider>
+        <LegacyHashRedirect />
+        <ScrollToTop />
+        <RouteProgress />
+        <AppRoutes />
+      </AuthProvider>
+    </BrowserRouter>
   )
 }
 

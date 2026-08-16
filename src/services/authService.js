@@ -1,16 +1,10 @@
 import api from './api'
 import { getApiBaseUrl, isLocalAppHost } from '../config'
 
-export const ROLES = {
-  CUSTOMER: 'customer',
-  SELLER: 'seller',
-  ADMIN: 'admin',
-}
-
 /**
  * Confirm API + auth store (Mongo preferred) are ready before register/login.
  */
-export async function ensureAuthApiReady() {
+async function ensureAuthApiReady() {
   const base = getApiBaseUrl()
   if (!base) {
     throw new Error(
@@ -39,6 +33,12 @@ export async function ensureAuthApiReady() {
         'GitHub Pages cannot reach the hosted API. Open Render → start/redeploy pahadlink-api, then confirm /api/health returns ok.'
       )
     }
+    // Local shop needs Mongo for checkout/orders — don't let file-store auth fake readiness.
+    if (isLocalAppHost() && data.ordersReady === false) {
+      throw new Error(
+        'MongoDB is not connected. Start MongoDB (npm run db:start), then restart the API.'
+      )
+    }
     return data
   } catch (err) {
     if (err instanceof Error && /Database is not ready|API URL|hosted API|GitHub Pages/i.test(err.message)) {
@@ -46,11 +46,13 @@ export async function ensureAuthApiReady() {
     }
     if (isLocalAppHost()) {
       throw new Error(
-        'Cannot reach local API. Keep MongoDB on and run: npm start (or npm run server).'
+        'Cannot reach local API. Keep MongoDB on and run: npm start (or npm run server).',
+        { cause: err }
       )
     }
     throw new Error(
-      `GitHub Pages cannot reach API (${base}). Render service may be stopped — redeploy pahadlink-api from the pahadlink-harvest repo.`
+      `GitHub Pages cannot reach API (${base}). Render service may be stopped — redeploy pahadlink-api from the pahadlink-harvest repo.`,
+      { cause: err }
     )
   } finally {
     window.clearTimeout(timer)
@@ -83,8 +85,10 @@ export async function loginUser(payload) {
   return data
 }
 
-export async function fetchMe() {
-  const { data } = await api.get('/auth/me')
+export async function fetchMe(token) {
+  const { data } = await api.get('/auth/me', {
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+  })
   return data.user
 }
 
@@ -106,15 +110,5 @@ export async function googleLogin(idToken) {
       'Google sign-in succeeded but no session was returned. Try again.'
     )
   }
-  return data
-}
-
-export async function listUsers() {
-  const { data } = await api.get('/auth/users')
-  return data.users
-}
-
-export async function updateUserRole(userId, role) {
-  const { data } = await api.patch(`/auth/users/${userId}/role`, { role })
   return data
 }

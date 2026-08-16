@@ -65,16 +65,24 @@ const CategoryPage = () => {
                 <img
                   src={banner.image}
                   alt={banner.alt}
+                  width={2560}
+                  height={480}
                   loading="eager"
                   decoding="async"
                   fetchPriority="high"
                 />
+                <div className="category-hero__copy">
+                  
+                  <h1 id="category-hero-title">{banner.title || category.name}</h1>
+                  {banner.headline ? (
+                    <p className="category-hero__headline">{banner.headline}</p>
+                  ) : null}
+                  {banner.blurb ? (
+                    <p className="category-hero__blurb">{banner.blurb}</p>
+                  ) : null}
+                </div>
               </div>
             )}
-
-            <div className="category-hero__head">
-              <h1 id="category-hero-title">{category.name}</h1>
-            </div>
           </div>
         </section>
 
