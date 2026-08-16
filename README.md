@@ -35,14 +35,17 @@ git push harvest main
 
 ### Vercel (frontend)
 
-1. [vercel.com/new](https://vercel.com/new) → Import `1mukeshr/pahadlink-harvest`
-2. Framework: **Vite** (uses `vercel.json`)
-3. Build: `npm run build:vercel` · Output: `dist` · Root: `/`
-4. Optional env: `VITE_API_URL=https://pahadlink-api.onrender.com/api`  
-   (also baked into `public/runtime-config.json`)
-5. Deploy → open `https://YOUR-PROJECT.vercel.app`
-6. Firebase Console → Authentication → Authorized domains → add `YOUR-PROJECT.vercel.app`
-7. Render → `FRONTEND_URL` → append `,https://YOUR-PROJECT.vercel.app`
+**Live site:** https://pahadlink-harvest.vercel.app  
+(also: https://pahadlink.vercel.app)
+
+**Import from GitHub (harvest repo):**  
+https://vercel.com/new/import?s=https%3A%2F%2Fgithub.com%2F1mukeshr%2Fpahadlink-harvest
+
+1. Open the import link (or Dashboard → Add New → Project → `pahadlink-harvest`)
+2. Framework: **Vite** · Root `/` · Build uses `npm run build` (Vercel sets `VERCEL=1` → base `/`)
+3. Env: `VITE_API_URL=https://pahadlink-api.onrender.com/api`
+4. Firebase → Authorized domains → add `pahadlink-harvest.vercel.app` (and `pahadlink.vercel.app`)
+5. Render → `FRONTEND_URL` → append `,https://pahadlink-harvest.vercel.app,https://pahadlink.vercel.app`
 
 ### GitHub Pages (optional alternate)
 
